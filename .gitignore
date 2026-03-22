@@ -1,0 +1,29 @@
+# ENV
+.env
+*.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+env/
+venv/
+*.log
+
+# Databases
+*.sqlite3
+
+# Node / Frontend
+node_modules/
+.next/
+out/
+build/
+dist/
+.DS_Store
+
+# User-specific
+.gemini/
+.agent/
+brain/

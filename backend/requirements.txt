@@ -1,0 +1,20 @@
+fastapi
+uvicorn
+pydantic[email]
+motor
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt==3.2.2
+pandas
+numpy
+scikit-learn
+statsmodels
+yfinance
+python-dotenv
+python-multipart
+email-validator
+# AI/ML
+tensorflow; platform_system!="Darwin" or platform_machine!="arm64"
+httpx
+textblob
+google-generativeai
