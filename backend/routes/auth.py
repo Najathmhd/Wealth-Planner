@@ -6,6 +6,8 @@ from core import security
 from core.config import settings
 from models.user import UserCreate, User, Token, UserInDB
 from db.mongodb import get_database
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 
 router = APIRouter()
 
@@ -54,6 +56,54 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         data={"sub": user_dict["email"]}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+@router.post("/google", response_model=Token)
+async def google_login(token_data: dict = Body(...)):
+    """
+    Handle Google Login by verifying the id_token sent from the frontend.
+    """
+    id_token_str = token_data.get("id_token")
+    if not id_token_str:
+        raise HTTPException(status_code=400, detail="Missing id_token")
+    
+    try:
+        # Verify the token
+        id_info = id_token.verify_oauth2_token(
+            id_token_str, google_requests.Request(), settings.GOOGLE_CLIENT_ID
+        )
+        
+        email = id_info.get("email")
+        full_name = id_info.get("name", "")
+        
+        if not email:
+            raise HTTPException(status_code=400, detail="Google token missing email")
+            
+        db = await get_database()
+        user_dict = await db.users.find_one({"email": email})
+        
+        if not user_dict:
+            # Create new user for Google login
+            new_user_data = {
+                "email": email,
+                "full_name": full_name,
+                "hashed_password": "", # No password for Google users
+                "auth_provider": "google"
+            }
+            await db.users.insert_one(new_user_data)
+            user_dict = new_user_data
+            
+        # Generate our own internal access token
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = security.create_access_token(
+            data={"sub": user_dict["email"]}, expires_delta=access_token_expires
+        )
+        return {"access_token": access_token, "token_type": "bearer"}
+        
+    except ValueError:
+        # Invalid token
+        raise HTTPException(status_code=401, detail="Invalid Google token")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Authentication error: {str(e)}")
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
