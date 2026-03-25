@@ -122,7 +122,15 @@ export default function RiskProfilePage() {
     const submitProfile = async () => {
         setLoading(true)
         try {
-            await api.post("/recommendations/analyze", formData)
+            // Ensure numeric values are actually numbers before sending
+            const submissionData = {
+                ...formData,
+                age: parseInt(formData.age.toString()),
+                risk_appetite: parseInt(formData.risk_appetite.toString()),
+                time_horizon: parseInt(formData.time_horizon.toString())
+            }
+            console.log("Submitting Profile Data:", submissionData)
+            await api.post("/recommendations/analyze", submissionData)
             // Redirect to recommendations to see the result
             router.push("/dashboard/recommendations")
         } catch (error) {
