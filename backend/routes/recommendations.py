@@ -16,21 +16,24 @@ async def perform_analysis(assessment: RiskAssessment, current_user: User, db):
     # Ensure we have a valid user ID (Consistency with finance.py)
     user_id_str = str(current_user.id) if current_user.id else current_user.email
     
-    # 1. Determine Risk Category
+    # 1. Determine Risk Category & Real Returns
     risk_score = assessment.risk_appetite
     if assessment.time_horizon < 3:
         risk_score -= 2 # Lower risk for short term
     
     category = "Conservative"
+    nominal_r = 0.05
     allocation = {"Bonds": 70, "Cash": 20, "Stocks": 10}
     returns = "3.2% - 4.8%"
     
     if risk_score > 7:
         category = "Aggressive"
+        nominal_r = 0.12
         allocation = {"Stocks": 80, "Crypto": 10, "Bonds": 10}
         returns = "11.5% - 18.2%"
     elif risk_score >= 4:
         category = "Moderate"
+        nominal_r = 0.08
         allocation = {"Stocks": 50, "Bonds": 40, "Real Estate": 10}
         returns = "7.4% - 10.1%"
 
@@ -58,63 +61,66 @@ async def perform_analysis(assessment: RiskAssessment, current_user: User, db):
             cat = exp.get("category", "Other").lower()
             if amt > (monthly_income * 0.2) and monthly_income > 0:
                 expense_tips.append({
-                    "category": cat,
-                    "tip": f"Your {cat} spending is high (>20% of income). Consider switching to a budget plan or finding cheaper alternatives."
+                    "category": cat.capitalize(),
+                    "tip": f"Your {cat} spending is high (>20% of income). Consider switching to a budget plan."
                 })
         
         if not expense_tips and monthly_expenses > 0:
-            expense_tips.append({"category": "General", "tip": "Your spending is balanced. Consider automating a 'pay yourself first' transfer to savings."})
+            expense_tips.append({"category": "General", "tip": "Your spending is balanced. Consider automating a 'pay yourself first' transfer."})
 
-        # --- 2.2 Growth Roadmap (1, 5, 10 Years) ---
-        annual_rates = {"Conservative": 0.03, "Moderate": 0.06, "Aggressive": 0.10}
-        r = annual_rates.get(category, 0.05) / 12
+        # --- 2.2 Growth Roadmap (Inflation-Adjusted) ---
+        inflation_r = 0.03
+        real_r = (1 + nominal_r) / (1 + inflation_r) - 1
+        mr = real_r / 12
         
         for years in [1, 5, 10]:
             n = years * 12
-            projected = current_savings * (1 + r)**n + monthly_savings * (((1 + r)**n - 1) / r) if r > 0 else (current_savings + monthly_savings * n)
+            if mr > 0:
+                projected = current_savings * (1 + mr)**n + monthly_savings * (((1 + mr)**n - 1) / mr)
+            else:
+                projected = current_savings + monthly_savings * n
+                
             roadmap.append({
                 "period": f"{years} Year{'s' if years > 1 else ''}",
                 "projected_wealth": round(max(0, projected), 2),
                 "suggestion": "Buy Index Funds" if years >= 5 else "High Yield Savings"
             })
 
-        # --- 2.3 FIRE Calculation ---
-        net_return = 0.04 / 12
+        # --- 2.3 Perfect FIRE Calculation ---
         annual_expenses = monthly_expenses * 12
-        fire_number = annual_expenses * 25
+        fire_number = annual_expenses * 25 # 4% SWR Rule
         
         years_to_fire = "30+"
         if monthly_savings > 0:
-            for n in range(1, 481): 
-                projected = current_savings * (1 + net_return)**n + monthly_savings * (((1 + net_return)**n - 1) / net_return)
+            for n in range(1, 601): 
+                projected = current_savings * (1 + mr)**n + monthly_savings * (((1 + mr)**n - 1) / mr)
                 if projected >= fire_number:
                     years_to_fire = round(n / 12, 1)
                     break
         
         fire_projection = {
-            "fire_number": fire_number,
+            "fire_number": round(fire_number, 2),
             "current_progress": round((current_savings / fire_number) * 100, 1) if fire_number > 0 else 0,
             "years_to_freedom": years_to_fire,
             "monthly_contribution": monthly_savings,
-            "monthly_income": monthly_income,
-            "monthly_expenses": monthly_expenses,
-            "savings_rate": round((monthly_savings / monthly_income * 100), 1) if monthly_income > 0 else 0
+            "assumed_return": f"{round(nominal_r*100)}%",
+            "inflation_adjusted": True
         }
 
     # 3. Dynamic Suggestions
     alternative_assets = []
     if category == "Conservative":
-        alternative_assets = ["Physical Gold (Safety)", "Government Bonds"]
-        platforms = ["Vanguard", "Local Bank CD"]
-        sectors = ["Utilities", "Consumer Staples"]
+        alternative_assets = ["Physical Gold", "Bonds"]
+        platforms = ["Vanguard"]
+        sectors = ["Utilities"]
     elif category == "Moderate":
-        alternative_assets = ["Gold ETFs", "Real Estate (REITs)"]
-        platforms = ["Fidelity", "Robinhood"]
-        sectors = ["Technology", "Healthcare"]
+        alternative_assets = ["Gold ETFs", "REITs"]
+        platforms = ["Fidelity"]
+        sectors = ["Technology"]
     else: # Aggressive
-        alternative_assets = ["Digital Gold/Bitcoin", "Venture Capital Funds"]
-        platforms = ["Coinbase (Gold-backed tokens)", "Interactive Brokers"]
-        sectors = ["AI & Robotics", "Green Energy"]
+        alternative_assets = ["Bitcoin", "VC Funds"]
+        platforms = ["Coinbase"]
+        sectors = ["AI & Energy"]
 
     return {
         "category": category,
@@ -126,7 +132,7 @@ async def perform_analysis(assessment: RiskAssessment, current_user: User, db):
         "alternatives": alternative_assets,
         "platforms": platforms,
         "sectors": sectors,
-        "advice": f"As a {category.lower()} investor, your roadmap prioritizes {sectors[0]} and {alternative_assets[0]} for optimal growth.",
+        "advice": f"Your {category.lower()} roadmap focuses on {sectors[0]} for optimal inflation-adjusted growth.",
         "finance_missing": len(fire_projection) == 0
     }
 

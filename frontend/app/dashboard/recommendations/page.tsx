@@ -366,11 +366,23 @@ export default function RecommendationsPage() {
                     <div className="grid gap-6 md:grid-cols-2">
                         <Card className="glass-card border-white/10 bg-white/5">
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2 text-emerald-400">
-                                    <Target className="h-5 w-5" />
-                                    The Road to Freedom (FIRE)
+                                <CardTitle className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2 text-emerald-400">
+                                        <Target className="h-5 w-5" />
+                                        The Road to Freedom (FIRE)
+                                    </div>
+                                    {fire.inflation_adjusted && (
+                                        <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded-md border border-emerald-500/20 uppercase font-bold tracking-tighter">
+                                            3% Inflation Adjusted
+                                        </span>
+                                    )}
                                 </CardTitle>
-                                <CardDescription>Financial Independence Projection</CardDescription>
+                                <CardDescription className="flex items-center justify-between">
+                                    <span>Financial Independence Projection</span>
+                                    {fire.assumed_return && (
+                                        <span className="text-[10px] text-muted-foreground italic">Assumed Return: {fire.assumed_return}</span>
+                                    )}
+                                </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-8 pb-8 min-h-[300px] flex flex-col justify-center">
                                 {fire.fire_number ? (
