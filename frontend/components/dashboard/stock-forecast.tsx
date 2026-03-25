@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -14,14 +14,32 @@ export function StockForecast() {
     const [data, setData] = useState<any>(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
+
     const popularAssets = [
         { name: "Apple", symbol: "AAPL" },
         { name: "Tesla", symbol: "TSLA" },
-        { name: "Microsoft", symbol: "MSFT" },
         { name: "Bitcoin", symbol: "BTC-USD" },
-        { name: "S&P 500", symbol: "^GSPC" },
+        { name: "Gold (ETF)", symbol: "GLD" },
+        { name: "Real Estate (REIT)", symbol: "VNQ" },
+        { name: "Microsoft", symbol: "MSFT" },
         { name: "Nvidia", symbol: "NVDA" }
     ]
+
+    const [hydrated, setHydrated] = useState(false)
+
+    useEffect(() => {
+        setHydrated(true)
+        const savedData = localStorage.getItem("last_forecast")
+        const savedSymbol = localStorage.getItem("last_symbol")
+        if (savedData) {
+            try {
+                setData(JSON.parse(savedData))
+                if (savedSymbol) setSymbol(savedSymbol)
+            } catch (e) {
+                console.error("Failed to load saved forecast:", e)
+            }
+        }
+    }, [])
 
     const handlePredict = async (searchSymbol = symbol) => {
         if (!searchSymbol) return
@@ -31,6 +49,9 @@ export function StockForecast() {
         try {
             const res = await api.get(`/stocks/predict/${searchSymbol}?days=30`)
             setData(res.data)
+            // Persist for next visit
+            localStorage.setItem("last_forecast", JSON.stringify(res.data))
+            localStorage.setItem("last_symbol", searchSymbol.toUpperCase())
         } catch (err) {
             console.error(err)
             setError(`Failed to fetch prediction for ${searchSymbol}. Valid symbol?`)
