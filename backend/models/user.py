@@ -40,7 +40,6 @@ class UserBase(BaseModel):
     email: EmailStr
     full_name: Optional[str] = None
     role: str = "user"
-    auth_provider: str = "local"
 
 class UserCreate(UserBase):
     password: str

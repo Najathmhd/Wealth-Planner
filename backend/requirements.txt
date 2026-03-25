@@ -18,4 +18,3 @@ tensorflow; platform_system!="Darwin" or platform_machine!="arm64"
 httpx
 textblob
 google-generativeai
-google-auth
