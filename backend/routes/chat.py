@@ -13,7 +13,7 @@ router = APIRouter()
 # Configure Gemini
 api_key = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=api_key)
-GEMINI_MODEL = "gemini-1.5-flash"
+GEMINI_MODEL = "gemini-2.0-flash"
 model = genai.GenerativeModel(GEMINI_MODEL)
 print(f"DEBUG: chat.py loaded with model='{GEMINI_MODEL}'")
 
