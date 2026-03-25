@@ -69,12 +69,106 @@ export default function RecommendationsPage() {
                 </Link>
             </div>
 
-            <Tabs defaultValue="allocation" className="space-y-6">
+            <Tabs defaultValue="roadmap" className="space-y-6">
                 <TabsList className="bg-white/5 border border-white/10 p-1">
+                    <TabsTrigger value="roadmap">Your Roadmap</TabsTrigger>
                     <TabsTrigger value="allocation">Asset Allocation</TabsTrigger>
                     <TabsTrigger value="forecast">Market Forecast</TabsTrigger>
                     <TabsTrigger value="freedom">Financial Freedom</TabsTrigger>
                 </TabsList>
+
+                <TabsContent value="roadmap" className="space-y-6">
+                    <div className="grid gap-6">
+                        <Card className="glass-card border-white/10 bg-white/5">
+                            <CardHeader>
+                                <CardTitle className="text-2xl font-bold flex items-center gap-3">
+                                    <div className="p-2 rounded-lg bg-primary/20">
+                                        <TrendingUp className="h-6 w-6 text-primary" />
+                                    </div>
+                                    Your Wealth Planning Journey
+                                </CardTitle>
+                                <CardDescription>Follow these 4 simple steps to master your money.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="pb-8">
+                                <div className="grid gap-8 relative">
+                                    {/* Connection Line */}
+                                    <div className="absolute left-8 top-12 bottom-12 w-0.5 bg-white/10 hidden md:block" />
+
+                                    {/* Step 1 */}
+                                    <div className="relative flex items-start gap-6 group">
+                                        <div className="z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/5 border border-white/10 shadow-xl group-hover:border-primary/50 transition-all duration-300">
+                                            <Shield className="h-8 w-8 text-blue-400" />
+                                        </div>
+                                        <div className="space-y-2 pt-2">
+                                            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                                1. The Safety Step (Emergency Fund)
+                                                {summary?.total_savings > 0 ? (
+                                                    <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full uppercase border border-emerald-500/20">Active</span>
+                                                ) : (
+                                                    <span className="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full uppercase border border-amber-500/20">Prerequisite</span>
+                                                )}
+                                            </h3>
+                                            <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed">
+                                                Before you invest, you need a "Safety Net." Save at least <span className="text-white font-bold">3–6 months of expenses</span>. This ensures you never have to sell your investments during an emergency.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Step 2 */}
+                                    <div className="relative flex items-start gap-6 group">
+                                        <div className="z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/5 border border-white/10 shadow-xl group-hover:border-primary/50 transition-all duration-300">
+                                            <Target className="h-8 w-8 text-primary" />
+                                        </div>
+                                        <div className="space-y-2 pt-2">
+                                            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                                2. The Risk DNA Step (How to Invest)
+                                                {!data?.profile_missing ? (
+                                                    <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full uppercase border border-emerald-500/20">Completed</span>
+                                                ) : (
+                                                    <span className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded-full uppercase border border-primary/20">Next Task</span>
+                                                )}
+                                            </h3>
+                                            <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed">
+                                                Tell the AI your age and goals. We assign you a category like <span className="text-primary font-bold">Moderate</span> or <span className="text-orange-400 font-bold">Aggressive</span>. This determines how much goes into Stocks vs Bonds.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Step 3 */}
+                                    <div className="relative flex items-start gap-6 group">
+                                        <div className="z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/5 border border-white/10 shadow-xl group-hover:border-primary/50 transition-all duration-300">
+                                            <Coins className="h-8 w-8 text-amber-400" />
+                                        </div>
+                                        <div className="space-y-2 pt-2">
+                                            <h3 className="text-xl font-bold text-white">3. The Asset Hub (Where to Invest)</h3>
+                                            <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed">
+                                                Follow the AI's <span className="text-white font-bold">Asset Allocation</span>. For Moderate profiles, we prioritize <span className="text-emerald-400 font-bold">Gold ETFs</span> and <span className="text-blue-400 font-bold">Technology Stocks</span> for balanced growth.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Step 4 */}
+                                    <div className="relative flex items-start gap-6 group">
+                                        <div className="z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/5 border border-white/10 shadow-xl group-hover:border-primary/50 transition-all duration-300">
+                                            <Zap className="h-8 w-8 text-emerald-400" />
+                                        </div>
+                                        <div className="space-y-2 pt-2">
+                                            <h3 className="text-xl font-bold text-white">4. The Freedom Step (Tracking Growth)</h3>
+                                            <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed">
+                                                Use the <span className="text-emerald-400 font-bold">Financial Freedom</span> tab to see exactly how many years you are from retirement. Adjust your monthly savings to see your "Freedom Year" get closer.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <div className="p-6 rounded-2xl bg-gradient-to-r from-primary/20 to-blue-500/20 border border-white/10 text-center">
+                            <h4 className="font-bold text-white mb-2 italic">"A goal without a plan is just a wish."</h4>
+                            <p className="text-xs text-muted-foreground">Ask the Chatbot (bottom right) if any of these steps seem messy or confusing!</p>
+                        </div>
+                    </div>
+                </TabsContent>
 
                 <TabsContent value="allocation" className="space-y-6">
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
