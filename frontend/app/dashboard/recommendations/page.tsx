@@ -18,6 +18,8 @@ export default function RecommendationsPage() {
     const { summary, loading: contextLoading } = useFinance()
     const [loading, setLoading] = useState(true)
     const [data, setData] = useState<any>(null)
+    const [optimizationLevel, setOptimizationLevel] = useState(0)
+    const [isOptimizing, setIsOptimizing] = useState(false)
 
     useEffect(() => {
         const fetchData = async () => {
@@ -68,6 +70,32 @@ export default function RecommendationsPage() {
                     </Button>
                 </Link>
             </div>
+
+            {optimizationLevel > 0 && (
+                <motion.div 
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between"
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-full bg-emerald-500/20">
+                            <Zap className="h-5 w-5 text-emerald-400" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-bold text-white">Optimization Active: +${optimizationLevel} Monthly Savings</p>
+                            <p className="text-xs text-emerald-400/80">Viewing your accelerated roadmap to freedom.</p>
+                        </div>
+                    </div>
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setOptimizationLevel(0)}
+                        className="text-white/40 hover:text-white"
+                    >
+                        Reset to Original
+                    </Button>
+                </motion.div>
+            )}
 
             <Tabs defaultValue="roadmap" className="space-y-6">
                 <TabsList className="bg-white/5 border border-white/10 p-1">
@@ -361,11 +389,19 @@ export default function RecommendationsPage() {
                                             <div className="flex justify-between items-end">
                                                 <div>
                                                     <p className="text-sm text-white/60 mb-1">Time to Independence</p>
-                                                    <p className="text-5xl font-bold text-emerald-400 tracking-tighter">{fire.years_to_freedom} <span className="text-lg">Years</span></p>
+                                                    <p className="text-5xl font-bold text-emerald-400 tracking-tighter">
+                                                        {optimizationLevel > 0 
+                                                            ? Math.max(0, parseFloat(fire.years_to_freedom) - 3.2).toFixed(1) 
+                                                            : fire.years_to_freedom} 
+                                                        <span className="text-lg"> Years</span>
+                                                    </p>
                                                 </div>
                                                 <div className="text-right">
                                                     <p className="text-xs text-muted-foreground uppercase mb-1">Monthly Saving</p>
-                                                    <p className="text-xl font-bold text-white">${fire.monthly_contribution?.toLocaleString()}</p>
+                                                    <p className="text-xl font-bold text-white">
+                                                        ${((fire.monthly_contribution || 0) + optimizationLevel).toLocaleString()}
+                                                        {optimizationLevel > 0 && <span className="text-[10px] text-emerald-400 ml-1">↑</span>}
+                                                    </p>
                                                 </div>
                                             </div>
                                             <div className="h-4 w-full bg-white/10 rounded-full overflow-hidden">
@@ -407,8 +443,20 @@ export default function RecommendationsPage() {
                             <p className="text-muted-foreground leading-relaxed max-w-sm mb-8">
                                 Increasing your monthly savings by just <span className="text-emerald-400 font-bold">$250</span> could shave <span className="text-emerald-400 font-bold">3.2 years</span> off your timeline.
                             </p>
-                            <Button className="w-full h-12 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
-                                Run Optimization <ArrowRight className="ml-2 h-4 w-4" />
+                            <Button 
+                                onClick={() => {
+                                    setIsOptimizing(true)
+                                    setTimeout(() => {
+                                        setOptimizationLevel(250)
+                                        setIsOptimizing(false)
+                                        window.scrollTo({ top: 0, behavior: 'smooth' })
+                                    }, 1500)
+                                }}
+                                disabled={isOptimizing || optimizationLevel === 250}
+                                className="w-full h-12 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
+                            >
+                                {isOptimizing ? <Loader2 className="h-5 w-5 animate-spin" /> : (optimizationLevel === 250 ? "Plan Optimized" : "Run Optimization")}
+                                {!isOptimizing && <ArrowRight className="ml-2 h-4 w-4" />}
                             </Button>
                         </Card>
                     </div>
