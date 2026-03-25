@@ -14,17 +14,26 @@ export function StockForecast() {
     const [data, setData] = useState<any>(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
+    const popularAssets = [
+        { name: "Apple", symbol: "AAPL" },
+        { name: "Tesla", symbol: "TSLA" },
+        { name: "Microsoft", symbol: "MSFT" },
+        { name: "Bitcoin", symbol: "BTC-USD" },
+        { name: "S&P 500", symbol: "^GSPC" },
+        { name: "Nvidia", symbol: "NVDA" }
+    ]
 
-    const handlePredict = async () => {
-        if (!symbol) return
+    const handlePredict = async (searchSymbol = symbol) => {
+        if (!searchSymbol) return
         setLoading(true)
+        setSymbol(searchSymbol.toUpperCase())
         setError("")
         try {
-            const res = await api.get(`/stocks/predict/${symbol}?days=30`)
+            const res = await api.get(`/stocks/predict/${searchSymbol}?days=30`)
             setData(res.data)
         } catch (err) {
             console.error(err)
-            setError("Failed to fetch prediction. Valid symbol?")
+            setError(`Failed to fetch prediction for ${searchSymbol}. Valid symbol?`)
         } finally {
             setLoading(false)
         }
@@ -40,16 +49,35 @@ export function StockForecast() {
                 <CardDescription>Enter a ticker symbol to unleash LSTM deep learning models on historical market data.</CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
-                <div className="flex space-x-2 mb-8 max-w-sm">
-                    <Input
-                        placeholder="Symbol (e.g. AAPL)"
-                        value={symbol}
-                        onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-                        className="bg-black/30 border-white/10 text-white focus:ring-primary h-12"
-                    />
-                    <Button onClick={handlePredict} disabled={loading} className="bg-primary hover:bg-primary/90 h-12 w-14 shadow-lg shadow-primary/20">
-                        {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />}
-                    </Button>
+                <div className="space-y-4 mb-10">
+                    <div className="flex space-x-2 max-w-sm">
+                        <Input
+                            placeholder="Symbol (e.g. AAPL)"
+                            value={symbol}
+                            onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+                            className="bg-black/30 border-white/10 text-white focus:ring-primary h-12"
+                        />
+                        <Button onClick={() => handlePredict()} disabled={loading} className="bg-primary hover:bg-primary/90 h-12 w-14 shadow-lg shadow-primary/20">
+                            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />}
+                        </Button>
+                    </div>
+                    
+                    <div className="space-y-2">
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest pl-1">Popular Quick-Lookup</p>
+                        <div className="flex flex-wrap gap-2">
+                            {popularAssets.map((asset) => (
+                                <button
+                                    key={asset.symbol}
+                                    onClick={() => handlePredict(asset.symbol)}
+                                    disabled={loading}
+                                    className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] text-white/70 hover:bg-primary/20 hover:border-primary/30 hover:text-primary transition-all font-bold flex items-center gap-1.5"
+                                >
+                                    <div className="h-1 w-1 bg-primary/40 rounded-full" />
+                                    {asset.name} ({asset.symbol})
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
 
                 {error && (
