@@ -84,7 +84,9 @@ async def perform_analysis(assessment: RiskAssessment, current_user: User, db):
         fire_number = annual_expenses * 25
         
         years_to_fire = "30+"
-        if monthly_savings > 0:
+        if fire_number > 0 and current_savings >= fire_number:
+            years_to_fire = 0
+        elif monthly_savings > 0 and fire_number > 0:
             for n in range(1, 481): 
                 projected = current_savings * (1 + net_return)**n + monthly_savings * (((1 + net_return)**n - 1) / net_return)
                 if projected >= fire_number:
