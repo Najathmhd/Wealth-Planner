@@ -53,9 +53,17 @@ async def predict_stock_price(symbol: str, days: int = 7):
              raise HTTPException(status_code=400, detail=f"Not enough historical data for LSTM training (need at least 60 days)")
 
         # 2. Sentiment Analysis (Advanced Feature 4)
-        headlines = ticker.news
-        combined_text = " ".join([n['title'] for n in headlines[:5]])
-        sentiment = get_sentiment(combined_text)
+        sentiment = "Neutral"
+        try:
+            headlines = ticker.news
+            if isinstance(headlines, list) and len(headlines) > 0:
+                # Some newer yfinance versions return dicts, some return strings for title. Let's be safe.
+                titles = [n.get('title', '') for n in headlines[:5] if isinstance(n, dict)]
+                if titles:
+                    combined_text = " ".join(titles)
+                    sentiment = get_sentiment(combined_text)
+        except Exception as e:
+            print(f"Failed to fetch or parse news for {symbol}: {e}")
 
         # 3. Prepare Data for LSTM
         data = hist.filter(['Close'])
