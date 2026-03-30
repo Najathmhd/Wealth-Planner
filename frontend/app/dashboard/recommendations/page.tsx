@@ -140,21 +140,40 @@ export default function RecommendationsPage() {
                                 <CardDescription>Time-bound wealth projections based on current savings rate.</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                    {(data?.roadmap || []).map((step: any, idx: number) => (
-                                        <div key={idx} className="relative p-5 rounded-2xl bg-white/5 border border-white/10 overflow-hidden group">
-                                            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-125 group-hover:opacity-20 transition-all">
-                                                <TrendingUp className="h-12 w-12" />
+                                {data?.roadmap && data.roadmap.length > 0 ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        {data.roadmap.map((step: any, idx: number) => (
+                                            <div key={idx} className="relative p-5 rounded-2xl bg-white/5 border border-white/10 overflow-hidden group">
+                                                <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-125 group-hover:opacity-20 transition-all">
+                                                    <TrendingUp className="h-12 w-12" />
+                                                </div>
+                                                <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">{step.period}</p>
+                                                <p className="text-xl font-bold text-white mb-2">${step.projected_wealth.toLocaleString()}</p>
+                                                <div className="flex items-center gap-1.5 text-[10px] font-medium text-white/50">
+                                                    <div className="h-1 w-1 rounded-full bg-primary" />
+                                                    {step.suggestion}
+                                                </div>
                                             </div>
-                                            <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">{step.period}</p>
-                                            <p className="text-xl font-bold text-white mb-2">${step.projected_wealth.toLocaleString()}</p>
-                                            <div className="flex items-center gap-1.5 text-[10px] font-medium text-white/50">
-                                                <div className="h-1 w-1 rounded-full bg-primary" />
-                                                {step.suggestion}
-                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="py-8 text-center space-y-4 bg-white/5 rounded-2xl border border-dashed border-white/10">
+                                        <div className="p-3 bg-primary/10 rounded-full w-fit mx-auto border border-primary/20">
+                                            <BarChart3 className="h-6 w-6 text-primary" />
                                         </div>
-                                    ))}
-                                </div>
+                                        <div className="space-y-1">
+                                            <p className="text-sm font-medium text-white/80">Roadmap Locked</p>
+                                            <p className="text-xs text-muted-foreground mx-auto max-w-sm">
+                                                Save your financial data in the Finance section to project your wealth growth accurately.
+                                            </p>
+                                        </div>
+                                        <Link href="/dashboard/finance">
+                                            <Button size="sm" className="bg-primary/20 text-primary hover:bg-primary/30 border border-primary/20">
+                                                Unlock Roadmap <ArrowRight className="ml-2 h-3 w-3" />
+                                            </Button>
+                                        </Link>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
 
