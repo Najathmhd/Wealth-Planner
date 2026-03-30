@@ -87,16 +87,44 @@ export default function ChatBot() {
 
                         {/* Chat Body */}
                         <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
-                            {messages.map((msg, i) => (
-                                <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                    <div className={`max-w-[85%] p-3 rounded-2xl text-sm ${msg.role === 'user'
-                                            ? 'bg-primary text-white rounded-tr-none'
-                                            : 'bg-white/10 text-white/90 border border-white/5 rounded-tl-none'
-                                        }`}>
-                                        {msg.content}
+                            {messages.map((msg, i) => {
+                                const renderMessage = (content: string) => {
+                                    if (msg.role === 'user') return content;
+                                    
+                                    return content.split('\n').map((line, blockIdx) => {
+                                        if (!line.trim()) return <div key={blockIdx} className="h-2" />;
+                                        
+                                        const isBullet = line.trim().startsWith('* ') || line.trim().startsWith('- ');
+                                        const styledLine = isBullet ? line.replace(/^[\*\-]\s/, '') : line;
+                                        
+                                        const parts = styledLine.split(/(\*\*.*?\*\*)/g);
+                                        const renderedLine = parts.map((part, partIdx) => {
+                                            if (part.startsWith('**') && part.endsWith('**')) {
+                                                return <strong key={partIdx} className="text-emerald-400 font-bold">{part.slice(2, -2)}</strong>;
+                                            }
+                                            return <span key={partIdx}>{part}</span>;
+                                        });
+
+                                        return (
+                                            <div key={blockIdx} className={`mb-1.5 ${isBullet ? 'flex gap-2 ml-2' : 'leading-relaxed'}`}>
+                                                {isBullet && <span className="text-emerald-400 font-bold mt-0.5">•</span>}
+                                                <div>{renderedLine}</div>
+                                            </div>
+                                        );
+                                    });
+                                };
+
+                                return (
+                                    <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                        <div className={`max-w-[85%] p-3 rounded-2xl text-sm ${msg.role === 'user'
+                                                ? 'bg-primary text-white rounded-tr-none'
+                                                : 'bg-white/10 text-white/90 border border-white/5 rounded-tl-none shadow-lg'
+                                            }`}>
+                                            {renderMessage(msg.content)}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                             {loading && (
                                 <div className="flex justify-start">
                                     <div className="bg-white/10 p-3 rounded-2xl rounded-tl-none border border-white/5">
