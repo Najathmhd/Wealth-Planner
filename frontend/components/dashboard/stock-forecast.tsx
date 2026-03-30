@@ -23,9 +23,10 @@ export function StockForecast() {
         try {
             const res = await api.get(`/stocks/predict/${targetSymbol}?days=30`)
             setData(res.data)
-        } catch (err) {
+        } catch (err: any) {
             console.error(err)
-            setError("Failed to fetch prediction. Valid symbol?")
+            const detail = err.response?.data?.detail
+            setError(detail ? `API Error: ${detail}` : "Failed to fetch prediction. Valid symbol?")
         } finally {
             setLoading(false)
         }
