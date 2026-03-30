@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* DEFAULT DARK THEME (Forced for this specific premium feel) */
+    --background: 240 10% 3.9%;
+    /* Deep almost-black */
+    --foreground: 0 0% 98%;
+    /* Pure White text */
+
+    --card: 240 10% 6%;
+    /* Slightly lighter dark */
+    --card-foreground: 0 0% 98%;
+
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 263.4 70% 50.4%;
+    /* VIBRANT Purple */
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 160 84% 39%;
+    /* Emerald Green for Finance/Money */
+    --secondary-foreground: 144 100% 97%;
+
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    /* Lighter grey for readability */
+
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 263.4 70% 50.4%;
+
+    --radius: 1rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    /* Subtle mesh gradient for depth, not overwhelming */
+    background-image:
+      radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(240, 100%, 10%, 1) 0, transparent 50%);
+    background-attachment: fixed;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-background;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary/20 rounded-full hover:bg-primary/40;
+  }
+}
+
+@layer utilities {
+  .glass {
+    /* Improved glassmorphism with better contrast */
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl;
+  }
+
+  .glass-card {
+    @apply bg-gradient-to-br from-white/5 to-white/0 backdrop-blur-md border border-white/10 rounded-2xl shadow-xl transition-all duration-300 hover:border-primary/50 hover:shadow-primary/20;
+  }
+
+  .text-glow {
+    text-shadow: 0 0 20px hsla(263, 70%, 50%, 0.5);
+  }
+}
