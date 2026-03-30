@@ -15,12 +15,13 @@ export function StockForecast() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
 
-    const handlePredict = async () => {
-        if (!symbol) return
+    const handlePredict = async (overrideSymbol?: string) => {
+        const targetSymbol = typeof overrideSymbol === 'string' ? overrideSymbol : symbol;
+        if (!targetSymbol) return
         setLoading(true)
         setError("")
         try {
-            const res = await api.get(`/stocks/predict/${symbol}?days=30`)
+            const res = await api.get(`/stocks/predict/${targetSymbol}?days=30`)
             setData(res.data)
         } catch (err) {
             console.error(err)
@@ -40,16 +41,38 @@ export function StockForecast() {
                 <CardDescription>Enter a ticker symbol to unleash LSTM deep learning models on historical market data.</CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
-                <div className="flex space-x-2 mb-8 max-w-sm">
+                <div className="flex space-x-2 mb-6 max-w-sm">
                     <Input
                         placeholder="Symbol (e.g. AAPL)"
                         value={symbol}
                         onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+                        onKeyDown={(e) => e.key === 'Enter' && handlePredict()}
                         className="bg-black/30 border-white/10 text-white focus:ring-primary h-12"
                     />
-                    <Button onClick={handlePredict} disabled={loading} className="bg-primary hover:bg-primary/90 h-12 w-14 shadow-lg shadow-primary/20">
+                    <Button onClick={() => handlePredict()} disabled={loading} className="bg-primary hover:bg-primary/90 h-12 w-14 shadow-lg shadow-primary/20">
                         {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />}
                     </Button>
+                </div>
+
+                <div className="mb-8">
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-3">Popular Platforms & Companies</p>
+                    <div className="flex flex-wrap gap-2">
+                        {["AAPL", "MSFT", "GOOGL", "TSLA", "AMZN"].map((ticker) => (
+                            <Button
+                                key={ticker}
+                                variant="outline"
+                                size="sm"
+                                disabled={loading}
+                                onClick={() => {
+                                    setSymbol(ticker);
+                                    handlePredict(ticker);
+                                }}
+                                className="bg-white/5 border-white/10 text-white hover:bg-primary/20 hover:text-primary hover:border-primary/20 transition-all font-bold tracking-wider"
+                            >
+                                {ticker}
+                            </Button>
+                        ))}
+                    </div>
                 </div>
 
                 {error && (
