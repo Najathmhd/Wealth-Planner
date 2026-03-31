@@ -15,7 +15,7 @@ import { useFinance } from "@/context/FinanceContext"
 
 export default function RecommendationsPage() {
     const router = useRouter()
-    const { summary, loading: contextLoading } = useFinance()
+    const { summary, loading: contextLoading, currencySymbol } = useFinance()
     const [loading, setLoading] = useState(true)
     const [data, setData] = useState<any>(null)
 
@@ -148,7 +148,7 @@ export default function RecommendationsPage() {
                                                     <TrendingUp className="h-12 w-12" />
                                                 </div>
                                                 <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">{step.period}</p>
-                                                <p className="text-xl font-bold text-white mb-2">${step.projected_wealth.toLocaleString()}</p>
+                                                <p className="text-xl font-bold text-white mb-2">{currencySymbol}{step.projected_wealth.toLocaleString()}</p>
                                                 <div className="flex items-center gap-1.5 text-[10px] font-medium text-white/50">
                                                     <div className="h-1 w-1 rounded-full bg-primary" />
                                                     {step.suggestion}
@@ -275,7 +275,7 @@ export default function RecommendationsPage() {
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="p-5 rounded-2xl bg-emerald-500/5 border border-emerald-500/10">
                                                 <p className="text-xs text-emerald-400/60 uppercase font-bold mb-1 tracking-wider">Target Wealth</p>
-                                                <p className="text-2xl font-bold text-white">${fire.fire_number?.toLocaleString() || "0"}</p>
+                                                <p className="text-2xl font-bold text-white">{currencySymbol}{fire.fire_number?.toLocaleString() || "0"}</p>
                                             </div>
                                             <div className="p-5 rounded-2xl bg-orange-500/5 border border-orange-500/10">
                                                 <p className="text-xs text-orange-400/60 uppercase font-bold mb-1 tracking-wider">Progress</p>
@@ -290,7 +290,7 @@ export default function RecommendationsPage() {
                                                 </div>
                                                 <div className="text-right">
                                                     <p className="text-xs text-muted-foreground uppercase mb-1">Monthly Saving</p>
-                                                    <p className="text-xl font-bold text-white">${fire.monthly_contribution?.toLocaleString()}</p>
+                                                    <p className="text-xl font-bold text-white">{currencySymbol}{fire.monthly_contribution?.toLocaleString()}</p>
                                                 </div>
                                             </div>
                                             <div className="h-4 w-full bg-white/10 rounded-full overflow-hidden">
@@ -330,9 +330,16 @@ export default function RecommendationsPage() {
                             </div>
                             <h3 className="text-2xl font-bold text-white mb-4">Accelerate Your Plan</h3>
                             <p className="text-muted-foreground leading-relaxed max-w-sm mb-8">
-                                Increasing your monthly savings by just <span className="text-emerald-400 font-bold">$250</span> could shave <span className="text-emerald-400 font-bold">3.2 years</span> off your timeline.
+                                Increasing your monthly savings by just <span className="text-emerald-400 font-bold">{currencySymbol}250</span> could shave <span className="text-emerald-400 font-bold">3.2 years</span> off your timeline.
                             </p>
-                            <Button className="w-full h-12 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
+                            <Button 
+                                onClick={() => {
+                                    window.dispatchEvent(new CustomEvent('chatbot:optimize', {
+                                        detail: { prompt: "Please provide a detailed optimization plan based on my current saving goals and target amounts. Show me step-by-step how I can accelerate my FIRE timeline and hit my savings goals faster." }
+                                    }))
+                                }}
+                                className="w-full h-12 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
+                            >
                                 Run Optimization <ArrowRight className="ml-2 h-4 w-4" />
                             </Button>
                         </Card>
