@@ -14,7 +14,7 @@ import Link from "next/link"
 
 export default function AnalyticsPage() {
     const router = useRouter()
-    const { history, latest, loading: contextLoading } = useFinance()
+    const { history, latest, loading: contextLoading, currencySymbol } = useFinance()
     const [riskProfile, setRiskProfile] = useState<any>(null)
     const [profileLoading, setProfileLoading] = useState(true)
 
@@ -125,7 +125,11 @@ export default function AnalyticsPage() {
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={cashFlowData}>
                                         <XAxis dataKey="month" stroke="#666" fontSize={12} />
-                                        <YAxis stroke="#666" fontSize={12} />
+                                        <YAxis 
+                                            stroke="#666" 
+                                            fontSize={12} 
+                                            tickFormatter={(value) => `${currencySymbol}${value}`}
+                                        />
                                         <Tooltip
                                             contentStyle={{ backgroundColor: '#000', border: '1px solid #333' }}
                                             cursor={{ fill: 'rgba(255,255,255,0.05)' }}
