@@ -16,11 +16,13 @@ export default function RegisterPage() {
     const [formData, setFormData] = useState({
         full_name: "",
         email: "",
-        password: ""
+        password: "",
+        country: "United States",
+        employment_type: "Private Sector"
     })
     const [error, setError] = useState("")
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormData({ ...formData, [e.target.id]: e.target.value })
     }
 
@@ -109,11 +111,46 @@ export default function RegisterPage() {
                                         type="password"
                                         disabled={loading}
                                         value={formData.password}
-                                        onChange={handleChange}
-                                        className="bg-white/50 border-white/30 focus:bg-white/70 transition-all"
+                                        onChange={handleChange as any}
+                                        className="bg-white/50 border-white/30 focus:bg-white/70 transition-all font-medium"
                                         required
                                     />
                                 </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="country">Country</Label>
+                                    <select
+                                        id="country"
+                                        disabled={loading}
+                                        value={formData.country}
+                                        onChange={handleChange as any}
+                                        className="w-full h-10 rounded-xl bg-white/50 border border-white/30 px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium"
+                                        required
+                                    >
+                                        <option value="United States">United States</option>
+                                        <option value="Sri Lanka">Sri Lanka</option>
+                                        <option value="United Kingdom">United Kingdom</option>
+                                        <option value="Australia">Australia</option>
+                                        <option value="India">India</option>
+                                        <option value="Canada">Canada</option>
+                                    </select>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="employment_type">Employment Type</Label>
+                                    <select
+                                        id="employment_type"
+                                        disabled={loading}
+                                        value={formData.employment_type}
+                                        onChange={handleChange as any}
+                                        className="w-full h-10 rounded-xl bg-white/50 border border-white/30 px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium"
+                                        required
+                                    >
+                                        <option value="Private Sector">Private Sector</option>
+                                        <option value="Government">Government</option>
+                                        <option value="Business Owner">Business Owner</option>
+                                        <option value="Freelancer/Daily Wage">Freelancer/Daily Wage</option>
+                                    </select>
+                                </div>
+
                                 <Button disabled={loading} className="w-full bg-primary hover:bg-primary/90 shadow-lg">
                                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                     Create Account
