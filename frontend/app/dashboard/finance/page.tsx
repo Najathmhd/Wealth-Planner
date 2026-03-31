@@ -40,7 +40,7 @@ interface SavingsGoal {
 
 export default function FinancePage() {
     const router = useRouter()
-    const { latest, refreshData } = useFinance()
+    const { latest, refreshData, currencySymbol } = useFinance()
     const [loading, setLoading] = useState(false)
     const [fetching, setFetching] = useState(true)
     const [showSuccessNav, setShowSuccessNav] = useState(false)
@@ -172,7 +172,7 @@ export default function FinancePage() {
                                         />
                                     </div>
                                     <div className="md:col-span-5 space-y-2">
-                                        <Label className="text-white">Monthly Amount ($)</Label>
+                                        <Label className="text-white">Monthly Amount ({currencySymbol})</Label>
                                         <Input
                                             type="number"
                                             value={income.amount || ''}
@@ -218,7 +218,7 @@ export default function FinancePage() {
                                         />
                                     </div>
                                     <div className="md:col-span-5 space-y-2">
-                                        <Label className="text-white">Estimated Amount ($)</Label>
+                                        <Label className="text-white">Estimated Amount ({currencySymbol})</Label>
                                         <Input
                                             type="number"
                                             value={expense.amount || ''}
@@ -264,7 +264,7 @@ export default function FinancePage() {
                                         />
                                     </div>
                                     <div className="md:col-span-3 space-y-2">
-                                        <Label className="text-white">Target Amount ($)</Label>
+                                        <Label className="text-white">Target Amount ({currencySymbol})</Label>
                                         <Input
                                             type="number"
                                             value={goal.target_amount || ''}
