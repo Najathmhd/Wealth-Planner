@@ -16,7 +16,7 @@ import { motion } from "framer-motion"
 import { useMemo } from "react"
 
 export default function DashboardPage() {
-    const { summary, history, latest, user, loading, refreshData } = useFinance()
+    const { summary, history, latest, user, loading, refreshData, currencySymbol } = useFinance()
     const [lastUpdated, setLastUpdated] = useState<string>("")
 
     // 1. Hooks MUST be at the top level
@@ -111,7 +111,7 @@ export default function DashboardPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold text-white">
-                                ${summary?.total_savings?.toLocaleString() ?? "0.00"}
+                                {currencySymbol}{summary?.total_savings?.toLocaleString() ?? "0.00"}
                             </div>
                             <p className="text-xs text-primary/80 font-medium mt-1">Total combined balance</p>
                         </CardContent>
@@ -128,7 +128,7 @@ export default function DashboardPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold text-white">
-                                ${summary?.monthly_income?.toLocaleString() ?? "0.00"}
+                                {currencySymbol}{summary?.monthly_income?.toLocaleString() ?? "0.00"}
                             </div>
                             <p className="text-xs text-muted-foreground mt-1">Monthly inflow</p>
                         </CardContent>
@@ -145,7 +145,7 @@ export default function DashboardPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold text-white">
-                                ${summary?.monthly_expenses?.toLocaleString() ?? "0.00"}
+                                {currencySymbol}{summary?.monthly_expenses?.toLocaleString() ?? "0.00"}
                             </div>
                             <p className="text-xs text-muted-foreground mt-1">Monthly outflow</p>
                         </CardContent>
