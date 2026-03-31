@@ -102,17 +102,71 @@ async def perform_analysis(assessment: RiskAssessment, current_user: User, db):
 
     # 3. Dynamic Suggestions
     alternative_assets = []
+    
+    country = getattr(current_user, "country", "United States")
+    employment_type = getattr(current_user, "employment_type", "Private Sector")
+    
+    local_pension = "401(k) / IRA"
+    
+    # 1. Define localized pensions
+    if employment_type == "Government":
+        local_pension = "Government Pension Scheme"
+    elif employment_type == "Business Owner":
+        local_pension = "Reinvesting in Business Growth"
+    elif employment_type == "Freelancer/Daily Wage":
+        local_pension = "High-Yield Fixed Deposits / Liquid Funds"
+    else:
+        # Private Sector / Default
+        if country == "Sri Lanka":
+            local_pension = "EPF / ETF (Provident Funds)"
+        elif country == "United Kingdom":
+            local_pension = "Workplace Pension / SIPP"
+        elif country == "Australia":
+            local_pension = "Superannuation Guarantee"
+        elif country == "India":
+            local_pension = "EPFO / PPF"
+        elif country == "Canada":
+            local_pension = "RRSP / TFSA"
+        else:
+            local_pension = "401(k) / IRA"
+            
+    # 2. Define platforms
+    if country == "Sri Lanka":
+        cons_plats = ["Local Top-Tier Banks", "Gov Securities"]
+        mod_plats = ["Local Stock Exchange (CSE)", "Unit Trusts"]
+        agg_plats = ["International Brokers", "Crypto Exchanges"]
+    elif country == "United Kingdom":
+        cons_plats = ["Premium Bonds", "High Street Banks"]
+        mod_plats = ["Hargreaves Lansdown", "Vanguard UK"]
+        agg_plats = ["Trading 212", "Coinbase UK"]
+    elif country == "Australia":
+        cons_plats = ["Term Deposits", "Government Bonds"]
+        mod_plats = ["CommSec", "Vanguard Australia"]
+        agg_plats = ["Interactive Brokers", "CoinSpot"]
+    elif country == "India":
+        cons_plats = ["Fixed Deposits (FD)", "Post Office Schemes"]
+        mod_plats = ["Zerodha", "Groww"]
+        agg_plats = ["WazirX", "Interactive Brokers India"]
+    elif country == "Canada":
+        cons_plats = ["GICs", "Big Five Banks"]
+        mod_plats = ["Wealthsimple", "Questrade"]
+        agg_plats = ["Interactive Brokers Canada", "Newton Crypto"]
+    else: # US DEFAULT
+        cons_plats = ["Vanguard", "Local Bank CD"]
+        mod_plats = ["Fidelity", "Robinhood"]
+        agg_plats = ["Coinbase (Crypto)", "Interactive Brokers"]
+
     if category == "Conservative":
-        alternative_assets = ["Physical Gold (Safety)", "Government Bonds"]
-        platforms = ["Vanguard", "Local Bank CD"]
+        alternative_assets = ["Physical Gold (Safety)", "Government Bonds", local_pension]
+        platforms = cons_plats
         sectors = ["Utilities", "Consumer Staples"]
     elif category == "Moderate":
-        alternative_assets = ["Gold ETFs", "Real Estate (REITs)"]
-        platforms = ["Fidelity", "Robinhood"]
+        alternative_assets = ["Gold ETFs", "Real Estate (REITs)", local_pension]
+        platforms = mod_plats
         sectors = ["Technology", "Healthcare"]
     else: # Aggressive
-        alternative_assets = ["Digital Gold/Bitcoin", "Venture Capital Funds"]
-        platforms = ["Coinbase (Gold-backed tokens)", "Interactive Brokers"]
+        alternative_assets = ["Digital Gold/Bitcoin", "Venture Capital Funds", local_pension]
+        platforms = agg_plats
         sectors = ["AI & Robotics", "Green Energy"]
 
     return {
