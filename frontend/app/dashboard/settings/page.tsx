@@ -16,10 +16,14 @@ export default function SettingsPage() {
     const { user, loading, refreshData } = useFinance()
     const [isEditing, setIsEditing] = useState(false)
     const [editedName, setEditedName] = useState("")
+    const [editedCountry, setEditedCountry] = useState("United States")
+    const [editedEmploymentType, setEditedEmploymentType] = useState("Private Sector")
 
     useEffect(() => {
         if (user) {
             setEditedName(user.full_name || "")
+            setEditedCountry(user.country || "United States")
+            setEditedEmploymentType(user.employment_type || "Private Sector")
         }
     }, [user])
 
@@ -31,7 +35,11 @@ export default function SettingsPage() {
 
     const handleUpdateProfile = async () => {
         try {
-            await api.put("/auth/me", { full_name: editedName })
+            await api.put("/auth/me", { 
+                full_name: editedName,
+                country: editedCountry,
+                employment_type: editedEmploymentType
+            })
             await refreshData()
             setIsEditing(false)
         } catch (error) {
@@ -106,12 +114,54 @@ export default function SettingsPage() {
                                     {user?.email || ""}
                                 </div>
                             </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-white/70">Country</label>
+                                {isEditing ? (
+                                    <select
+                                        className="w-full h-10 rounded-xl bg-black/40 border border-primary/30 px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                        value={editedCountry}
+                                        onChange={(e) => setEditedCountry(e.target.value)}
+                                    >
+                                        <option value="United States">United States</option>
+                                        <option value="Sri Lanka">Sri Lanka</option>
+                                        <option value="United Kingdom">United Kingdom</option>
+                                        <option value="Australia">Australia</option>
+                                        <option value="India">India</option>
+                                        <option value="Canada">Canada</option>
+                                    </select>
+                                ) : (
+                                    <div className="h-10 rounded-xl bg-black/20 border border-white/10 px-4 py-2 text-white font-medium">
+                                        {user?.country || "United States"}
+                                    </div>
+                                )}
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-white/70">Employment Type</label>
+                                {isEditing ? (
+                                    <select
+                                        className="w-full h-10 rounded-xl bg-black/40 border border-primary/30 px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                        value={editedEmploymentType}
+                                        onChange={(e) => setEditedEmploymentType(e.target.value)}
+                                    >
+                                        <option value="Private Sector">Private Sector</option>
+                                        <option value="Government">Government</option>
+                                        <option value="Business Owner">Business Owner</option>
+                                        <option value="Freelancer/Daily Wage">Freelancer/Daily Wage</option>
+                                    </select>
+                                ) : (
+                                    <div className="h-10 rounded-xl bg-black/20 border border-white/10 px-4 py-2 text-white font-medium">
+                                        {user?.employment_type || "Private Sector"}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         {isEditing && (
                             <div className="flex justify-end gap-2 pt-2">
                                 <Button variant="ghost" className="text-white/60" onClick={() => {
                                     setIsEditing(false)
                                     setEditedName(user?.full_name || "")
+                                    setEditedCountry(user?.country || "United States")
+                                    setEditedEmploymentType(user?.employment_type || "Private Sector")
                                 }}>
                                     Cancel
                                 </Button>
