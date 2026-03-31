@@ -1,6 +1,7 @@
 "use client"
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
+import { useFinance } from "@/context/FinanceContext"
 
 export function AllocationChart({ data }: { data: any[] }) {
     return (
@@ -29,6 +30,7 @@ export function AllocationChart({ data }: { data: any[] }) {
 }
 
 export function ProjectionChart({ data }: { data: any[] }) {
+    const { currencySymbol } = useFinance()
     return (
         <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data}>
@@ -43,7 +45,7 @@ export function ProjectionChart({ data }: { data: any[] }) {
                     stroke="#888888"
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={(value) => `$${value}`}
+                    tickFormatter={(value) => `${currencySymbol}${value}`}
                 />
                 <Tooltip
                     cursor={{ fill: 'rgba(255,255,255,0.05)' }}
