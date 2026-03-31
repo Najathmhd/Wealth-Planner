@@ -88,8 +88,8 @@ async def update_user_details(
 ):
     db = await get_database()
     
-    # Filter allowed updates (e.g., name, etc. NOT email or password directly here)
-    allowed_fields = ["full_name"]
+    # Filter allowed updates
+    allowed_fields = ["full_name", "country", "employment_type"]
     safe_updates = {k: v for k, v in updates.items() if k in allowed_fields}
 
     
