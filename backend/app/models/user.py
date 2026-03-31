@@ -40,6 +40,8 @@ class UserBase(BaseModel):
     email: EmailStr
     full_name: Optional[str] = None
     role: str = "user"
+    country: Optional[str] = "United States"
+    employment_type: Optional[str] = "Private Sector"
 
 class UserCreate(UserBase):
     password: str
