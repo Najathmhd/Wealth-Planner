@@ -22,11 +22,11 @@ export default function ChatBot() {
         }
     }, [messages])
 
-    const handleSend = async () => {
-        if (!input.trim()) return
+    const handleSend = async (messageOverride?: string) => {
+        const userMsg = messageOverride || input
+        if (!userMsg.trim()) return
 
-        const userMsg = input
-        setInput("")
+        if (!messageOverride) setInput("")
         setMessages(prev => [...prev, { role: 'user', content: userMsg }])
         setLoading(true)
 
@@ -40,6 +40,20 @@ export default function ChatBot() {
             setLoading(false)
         }
     }
+
+    useEffect(() => {
+        const handleOptimize = (e: any) => {
+            setIsOpen(true);
+            setIsMinimized(false);
+            if (e.detail?.prompt) {
+                setTimeout(() => {
+                    handleSend(e.detail.prompt);
+                }, 500);
+            }
+        };
+        window.addEventListener("chatbot:optimize", handleOptimize);
+        return () => window.removeEventListener("chatbot:optimize", handleOptimize);
+    }, []);
 
     return (
         <div className="fixed bottom-6 right-6 z-50">
