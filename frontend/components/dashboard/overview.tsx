@@ -1,12 +1,15 @@
 "use client"
 
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
+import { useFinance } from "@/context/FinanceContext"
 
 interface OverviewProps {
     data?: any[]
 }
 
 export function Overview({ data = [] }: OverviewProps) {
+    const { currencySymbol } = useFinance()
+    
     return (
         <ResponsiveContainer width="100%" height={350}>
             <BarChart data={data}>
@@ -23,7 +26,7 @@ export function Overview({ data = [] }: OverviewProps) {
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={(value) => `$${value}`}
+                    tickFormatter={(value) => `${currencySymbol}${value}`}
                 />
                 <Tooltip
                     cursor={{ fill: 'rgba(255,255,255,0.1)' }}
