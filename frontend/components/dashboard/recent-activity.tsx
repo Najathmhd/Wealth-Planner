@@ -1,8 +1,15 @@
+"use client"
+
+import { useFinance } from "@/context/FinanceContext"
+import { cn } from "@/lib/utils"
+
 interface RecentActivityProps {
     data?: any[]
 }
 
 export function RecentActivity({ data = [] }: RecentActivityProps) {
+    const { currencySymbol } = useFinance()
+
     if (data.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground italic text-sm">
@@ -33,7 +40,7 @@ export function RecentActivity({ data = [] }: RecentActivityProps) {
                             "ml-auto font-medium",
                             isIncome ? "text-green-500" : "text-white"
                         )}>
-                            {isIncome ? "+" : "-"}${Number(item.amount).toLocaleString()}
+                            {isIncome ? "+" : "-"}{currencySymbol}{Number(item.amount).toLocaleString()}
                         </div>
                     </div>
                 )
@@ -41,6 +48,3 @@ export function RecentActivity({ data = [] }: RecentActivityProps) {
         </div>
     )
 }
-
-import { cn } from "@/lib/utils"
-
