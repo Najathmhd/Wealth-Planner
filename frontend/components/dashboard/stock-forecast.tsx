@@ -8,8 +8,10 @@ import { Search, Loader2, AlertTriangle, Zap, TrendingUp, BarChart, Activity } f
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import api from "@/lib/api"
 import { motion } from "framer-motion"
+import { useFinance } from "@/context/FinanceContext"
 
 export function StockForecast() {
+    const { currencySymbol } = useFinance()
     const [symbol, setSymbol] = useState("AAPL")
     const [data, setData] = useState<any>(null)
     const [loading, setLoading] = useState(false)
@@ -95,7 +97,7 @@ export function StockForecast() {
                                     <TrendingUp className="h-10 w-10" />
                                 </div>
                                 <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest mb-1">Current Price</p>
-                                <p className="text-2xl font-bold text-white">${data.current_price?.toFixed(2)}</p>
+                                <p className="text-2xl font-bold text-white">{currencySymbol}{data.current_price?.toFixed(2)}</p>
                             </div>
 
                             <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-left relative overflow-hidden group">
@@ -121,7 +123,7 @@ export function StockForecast() {
                                     <BarChart className="h-10 w-10" />
                                 </div>
                                 <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest mb-1">SMA (20/50)</p>
-                                <p className="text-sm font-bold text-white">${data.indicators?.SMA_20.toFixed(1)} / ${data.indicators?.SMA_50.toFixed(1)}</p>
+                                <p className="text-sm font-bold text-white">{currencySymbol}{data.indicators?.SMA_20.toFixed(1)} / {currencySymbol}{data.indicators?.SMA_50.toFixed(1)}</p>
                             </div>
                         </div>
 
@@ -130,7 +132,7 @@ export function StockForecast() {
                                 <LineChart data={data.prediction}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
                                     <XAxis dataKey="date" stroke="#666" fontSize={11} tickFormatter={(val) => val.slice(5)} dy={10} />
-                                    <YAxis stroke="#666" fontSize={11} domain={['auto', 'auto']} tickFormatter={(val) => `$${val}`} />
+                                    <YAxis stroke="#666" fontSize={11} domain={['auto', 'auto']} tickFormatter={(val) => `${currencySymbol}${val}`} />
                                     <Tooltip
                                         contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', borderRadius: '12px', borderColor: '#333', color: '#fff', backdropFilter: 'blur(4px)' }}
                                         itemStyle={{ color: '#fff' }}
