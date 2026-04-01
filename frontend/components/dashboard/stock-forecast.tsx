@@ -23,7 +23,7 @@ export function StockForecast() {
         setLoading(true)
         setError("")
         try {
-            const res = await api.get(`/stocks/predict/${targetSymbol}?days=30`)
+            const res = await api.get(`/stocks/predict/${targetSymbol}?days=30&window=60`)
             setData(res.data)
         } catch (err: any) {
             console.error(err)
@@ -42,6 +42,7 @@ export function StockForecast() {
                     Neural Market Forecast
                 </CardTitle>
                 <CardDescription>Enter a ticker symbol to unleash LSTM deep learning models on historical market data.</CardDescription>
+                <CardDescription>Prediction based on last 60 days of market data.</CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
                 <div className="flex space-x-2 mb-6 max-w-sm">
