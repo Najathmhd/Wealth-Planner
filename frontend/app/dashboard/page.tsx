@@ -100,7 +100,7 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                 <motion.div variants={item}>
                     <Card className="glass-card bg-gradient-to-br from-primary/20 via-primary/5 to-transparent h-full">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -151,6 +151,28 @@ export default function DashboardPage() {
                         </CardContent>
                     </Card>
                 </motion.div>
+
+                {summary?.hidden_wealth !== undefined && summary.hidden_wealth > 0 && (
+                    <motion.div variants={item}>
+                        <Card className="glass-card bg-gradient-to-br from-indigo-500/20 via-indigo-500/5 to-transparent h-full relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-2 opacity-5 group-hover:scale-110 transition-transform">
+                                <Shield className="h-12 w-12" />
+                            </div>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium text-white/90">Social Security</CardTitle>
+                                <div className="p-2 bg-indigo-500/20 rounded-lg">
+                                    <Shield className="h-4 w-4 text-indigo-400" />
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold text-white">
+                                    {currencySymbol}{summary?.hidden_wealth?.toLocaleString()}
+                                </div>
+                                <p className="text-xs text-indigo-400/80 font-medium mt-1">EPF/ETF Hidden Growth</p>
+                            </CardContent>
+                        </Card>
+                    </motion.div>
+                )}
 
                 <motion.div variants={item}>
                     <Card className="glass-card bg-gradient-to-br from-emerald-500/20 via-emerald-500/5 to-transparent h-full">
