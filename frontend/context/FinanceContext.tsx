@@ -9,6 +9,7 @@ interface FinanceSummary {
     monthly_income: number
     monthly_expenses: number
     investment_roi: number
+    hidden_wealth?: number 
 }
 
 interface FinanceContextType {
