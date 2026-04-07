@@ -78,11 +78,24 @@ async def get_finance_summary(currency: str = "USD", current_user: User = Depend
             "currency": currency
         }
 
+    # Calculate Localized Hidden Wealth (Sri Lanka EPF/ETF)
+    country = getattr(current_user, "country", "United States")
+    employment_type = getattr(current_user, "employment_type", "Private Sector")
+    
+    hidden_wealth = 0
+    if country == "Sri Lanka" and employment_type == "Private Sector":
+        # Sum of income sources named 'Salary'
+        primary_salary = sum(item.get("amount", 0) for item in finance_data.get("incomes", []) 
+                           if "salary" in item.get("name", "").lower() or "primary" in item.get("name", "").lower())
+        if primary_salary > 0:
+            hidden_wealth = primary_salary * 0.163 # 12% EPF + 3% ETF indexed to Net
+
     return {
         "total_savings": float(finance_data.get("total_savings", 0.0)) * rate,
         "monthly_income": float(finance_data.get("monthly_income", 0.0)) * rate,
         "monthly_expenses": float(finance_data.get("monthly_expenses", 0.0)) * rate,
         "investment_roi": 12.5,
+        "hidden_wealth": round(hidden_wealth * rate, 2),
         "currency": currency
     }
 
@@ -109,12 +122,18 @@ async def get_finance_history(currency: str = "USD", current_user: User = Depend
     cursor = finance_collection.find({"user_id": user_id}).sort("date", 1).limit(12)
     history = await cursor.to_list(length=12)
     
+    country = getattr(current_user, "country", "United States")
+    employment_type = getattr(current_user, "employment_type", "Private Sector")
+
     return [
         {
             "date": record.get("date"),
             "total_savings": float(record.get("total_savings", 0)) * rate,
             "income": float(record.get("monthly_income", 0)) * rate,
             "expenses": float(record.get("monthly_expenses", 0)) * rate,
+            "hidden_wealth": round((sum(item.get("amount", 0) for item in record.get("incomes", []) 
+                                     if "salary" in item.get("name", "").lower()) * 0.163 * rate) 
+                                 if country == "Sri Lanka" and employment_type == "Private Sector" else 0, 2),
             "currency": currency
         } for record in history
     ]
