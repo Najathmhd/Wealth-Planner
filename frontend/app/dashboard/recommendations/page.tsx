@@ -256,7 +256,7 @@ export default function RecommendationsPage() {
                 </TabsContent>
 
                 <TabsContent value="forecast" className="space-y-6">
-                    <StockForecast />
+                    <StockForecast platforms={data?.platforms || []} />
                 </TabsContent>
 
                 <TabsContent value="freedom" className="space-y-6">
@@ -273,15 +273,35 @@ export default function RecommendationsPage() {
                                 {fire.fire_number ? (
                                     <>
                                         <div className="grid grid-cols-2 gap-4">
-                                            <div className="p-5 rounded-2xl bg-emerald-500/5 border border-emerald-500/10">
+                                            <div className="p-5 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 relative overflow-hidden group">
                                                 <p className="text-xs text-emerald-400/60 uppercase font-bold mb-1 tracking-wider">Target Wealth</p>
                                                 <p className="text-2xl font-bold text-white">{currencySymbol}{fire.fire_number?.toLocaleString() || "0"}</p>
+                                                <Target className="absolute -bottom-2 -right-2 h-12 w-12 text-emerald-500/10 group-hover:scale-110 transition-transform" />
                                             </div>
-                                            <div className="p-5 rounded-2xl bg-orange-500/5 border border-orange-500/10">
+                                            <div className="p-5 rounded-2xl bg-orange-500/5 border border-orange-500/10 relative overflow-hidden group">
                                                 <p className="text-xs text-orange-400/60 uppercase font-bold mb-1 tracking-wider">Progress</p>
                                                 <p className="text-2xl font-bold text-white">{fire.current_progress}%</p>
+                                                <TrendingUp className="absolute -bottom-2 -right-2 h-12 w-12 text-orange-500/10 group-hover:scale-110 transition-transform" />
                                             </div>
                                         </div>
+
+                                        {fire.social_security_bonus > 0 && (
+                                            <div className="p-4 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-between group hover:bg-primary/20 transition-all border-dashed">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30">
+                                                        <Shield className="h-5 w-5 text-primary" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs font-bold text-white uppercase tracking-widest">Social Security Factor</p>
+                                                        <p className="text-[10px] text-primary font-medium">EPF/ETF Adjusted (Employer {fire.social_security_bonus > 1000 ? '15%' : ''})</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-lg font-bold text-primary">+{currencySymbol}{fire.social_security_bonus.toLocaleString()}</p>
+                                                    <p className="text-[9px] text-white/40 font-bold uppercase tracking-tighter">Per Month Growth</p>
+                                                </div>
+                                            </div>
+                                        )}
                                         <div className="space-y-4">
                                             <div className="flex justify-between items-end">
                                                 <div>
