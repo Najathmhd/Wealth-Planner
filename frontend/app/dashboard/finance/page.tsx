@@ -40,7 +40,7 @@ interface SavingsGoal {
 
 export default function FinancePage() {
     const router = useRouter()
-    const { latest, refreshData, currencySymbol } = useFinance()
+    const { latest, user, refreshData, currencySymbol } = useFinance()
     const [loading, setLoading] = useState(false)
     const [fetching, setFetching] = useState(true)
     const [showSuccessNav, setShowSuccessNav] = useState(false)
@@ -154,12 +154,52 @@ export default function FinancePage() {
                 <TabsContent value="income" className="space-y-4">
                     <Card className="glass border-white/10">
                         <CardHeader>
-                            <CardTitle className="text-white">Income Sources</CardTitle>
-                            <CardDescription>
-                                Add your regular streams of income here.
-                            </CardDescription>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <CardTitle className="text-white">Income Sources</CardTitle>
+                                    <CardDescription>
+                                        Add your regular streams of income here.
+                                    </CardDescription>
+                                </div>
+                                {user?.country === "Sri Lanka" && (
+                                    <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-full">
+                                        <AlertCircle className="h-4 w-4 text-primary" />
+                                        <span className="text-[10px] font-bold text-primary uppercase tracking-wider">WNOP Active</span>
+                                    </div>
+                                )}
+                            </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
+                            {user?.country === "Sri Lanka" && (
+                                <div className="mb-6 p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-xl space-y-3">
+                                    <div className="flex items-start gap-3">
+                                        <CheckCircle className="h-5 w-5 text-emerald-400 mt-0.5" />
+                                        <div>
+                                            <p className="text-sm font-bold text-white">Wages Not Otherwise Paid (WNOP)</p>
+                                            <p className="text-xs text-white/50 leading-relaxed">
+                                                Include your bonuses, overtime, and allowances here. These are critical for accurate 
+                                                Wealth planning and EPF/ETF calculations in Sri Lanka.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {['Bonus', 'Overtime (OT)', 'Shift Allowance', 'Travel Allowance'].map((source) => (
+                                            <Button 
+                                                key={source}
+                                                variant="outline" 
+                                                size="sm" 
+                                                className="h-7 text-[10px] bg-white/5 border-white/10 text-white/70 hover:bg-primary/20 hover:text-primary transition-all"
+                                                onClick={() => {
+                                                    setIncomes([...incomes, { name: source, amount: 0 }]);
+                                                }}
+                                            >
+                                                + {source}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             {incomes.map((income, index) => (
                                 <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                                     <div className="md:col-span-5 space-y-2">
