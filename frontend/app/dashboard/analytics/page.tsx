@@ -47,7 +47,8 @@ export default function AnalyticsPage() {
     const cashFlowData = history.filter(h => h && h.date).map((h: any) => ({
         month: new Date(h.date).toLocaleDateString('default', { month: 'short' }),
         income: Number(h.income || 0),
-        expenses: Number(h.expenses || 0)
+        expenses: Number(h.expenses || 0),
+        hidden: Number(h.hidden_wealth || 0)
     }))
 
     // Group expenses by category
@@ -117,9 +118,9 @@ export default function AnalyticsPage() {
                             <CardHeader>
                                 <CardTitle className="text-white flex items-center gap-2">
                                     <TrendingUp className="h-5 w-5 text-primary" />
-                                    Income vs Expenses
+                                    Wealth Growth Mix
                                 </CardTitle>
-                                <CardDescription>Historical cash flow performance over the last {history.length} snapshots.</CardDescription>
+                                <CardDescription>Tracking income, expenses, and automated wealth builders (EPF/ETF).</CardDescription>
                             </CardHeader>
                             <CardContent className="h-[300px] pt-4">
                                 <ResponsiveContainer width="100%" height="100%">
@@ -131,11 +132,13 @@ export default function AnalyticsPage() {
                                             tickFormatter={(value) => `${currencySymbol}${value}`}
                                         />
                                         <Tooltip
-                                            contentStyle={{ backgroundColor: '#000', border: '1px solid #333' }}
+                                            contentStyle={{ backgroundColor: '#000', border: '1px solid #333', borderRadius: '12px' }}
                                             cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                                            formatter={(value: any) => [`${currencySymbol}${value.toLocaleString()}`, '']}
                                         />
                                         <Bar dataKey="income" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="Income" />
                                         <Bar dataKey="expenses" fill="#f59e0b" radius={[4, 4, 0, 0]} name="Expenses" />
+                                        <Bar dataKey="hidden" fill="#10b981" radius={[4, 4, 0, 0]} name="EPF/ETF Factor" />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </CardContent>
