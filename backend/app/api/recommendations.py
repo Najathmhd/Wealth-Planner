@@ -51,7 +51,30 @@ async def perform_analysis(assessment: RiskAssessment, current_user: User, db):
         monthly_savings = monthly_income - monthly_expenses
         current_savings = latest_finance.get("total_savings", 0)
         
-        # --- 2.1 Expense Audit ---
+        # --- 2.1 Localized Savings Factor (Sri Lanka EPF/ETF) ---
+        country = getattr(current_user, "country", "United States")
+        employment_type = getattr(current_user, "employment_type", "Private Sector")
+        
+        hidden_savings = 0
+        is_lkr_localized = (country == "Sri Lanka" and employment_type == "Private Sector")
+        
+        if is_lkr_localized:
+            # Assume income sources include a "Salary" component
+            # If user enters Net Salary (after 8% employee EPF), 
+            # the employer's 15% (12% EPF + 3% ETF) is approx 16.3% of the Net.
+            primary_salary = 0
+            for inc in latest_finance.get("incomes", []):
+                name = inc.get("name", "").lower()
+                if "salary" in name or "primary" in name:
+                    primary_salary += inc.get("amount", 0)
+            
+            if primary_salary > 0:
+                hidden_savings = primary_salary * 0.163
+                print(f"Applying Sri Lanka EPF/ETF Factor: +{hidden_savings} LKR/mo")
+
+        total_monthly_savings = monthly_savings + hidden_savings
+        
+        # --- 2.2 Expense Audit ---
         expense_list = latest_finance.get("expenses", [])
         for exp in expense_list:
             amt = exp.get("amount", 0)
@@ -65,20 +88,21 @@ async def perform_analysis(assessment: RiskAssessment, current_user: User, db):
         if not expense_tips and monthly_expenses > 0:
             expense_tips.append({"category": "General", "tip": "Your spending is balanced. Consider automating a 'pay yourself first' transfer to savings."})
 
-        # --- 2.2 Growth Roadmap (1, 5, 10 Years) ---
+        # --- 2.3 Growth Roadmap (1, 5, 10 Years) ---
         annual_rates = {"Conservative": 0.03, "Moderate": 0.06, "Aggressive": 0.10}
         r = annual_rates.get(category, 0.05) / 12
         
         for years in [1, 5, 10]:
             n = years * 12
-            projected = current_savings * (1 + r)**n + monthly_savings * (((1 + r)**n - 1) / r) if r > 0 else (current_savings + monthly_savings * n)
+            # Use total_monthly_savings (reported + hidden)
+            projected = current_savings * (1 + r)**n + total_monthly_savings * (((1 + r)**n - 1) / r) if r > 0 else (current_savings + total_monthly_savings * n)
             roadmap.append({
                 "period": f"{years} Year{'s' if years > 1 else ''}",
                 "projected_wealth": round(max(0, projected), 2),
                 "suggestion": "Buy Index Funds" if years >= 5 else "High Yield Savings"
             })
 
-        # --- 2.3 FIRE Calculation ---
+        # --- 2.4 FIRE Calculation ---
         net_return = 0.04 / 12
         annual_expenses = monthly_expenses * 12
         fire_number = annual_expenses * 25
@@ -86,9 +110,10 @@ async def perform_analysis(assessment: RiskAssessment, current_user: User, db):
         years_to_fire = "30+"
         if fire_number > 0 and current_savings >= fire_number:
             years_to_fire = 0
-        elif monthly_savings > 0 and fire_number > 0:
+        elif total_monthly_savings > 0 and fire_number > 0:
             for n in range(1, 481): 
-                projected = current_savings * (1 + net_return)**n + monthly_savings * (((1 + net_return)**n - 1) / net_return)
+                # Use total_monthly_savings
+                projected = current_savings * (1 + net_return)**n + total_monthly_savings * (((1 + net_return)**n - 1) / net_return)
                 if projected >= fire_number:
                     years_to_fire = round(n / 12, 1)
                     break
@@ -97,7 +122,8 @@ async def perform_analysis(assessment: RiskAssessment, current_user: User, db):
             "fire_number": fire_number,
             "current_progress": round((current_savings / fire_number) * 100, 1) if fire_number > 0 else 0,
             "years_to_freedom": years_to_fire,
-            "monthly_contribution": monthly_savings
+            "monthly_contribution": monthly_savings,
+            "social_security_bonus": round(hidden_savings, 2) if hidden_savings > 0 else 0
         }
 
     # 3. Dynamic Suggestions
