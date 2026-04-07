@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 import yfinance as yf
 import pandas as pd
 import numpy as np
@@ -8,6 +8,9 @@ from tensorflow.keras.layers import LSTM, Dense, Dropout
 from datetime import datetime, timedelta
 from textblob import TextBlob
 import os
+from app.api.auth import get_current_user
+from app.models.user import User
+from app.db.mongodb import get_database
 
 router = APIRouter()
 
@@ -43,7 +46,7 @@ async def get_historical_data(symbol: str, period: str = "1mo"):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/predict/{symbol}")
-async def predict_stock_price(symbol: str, days: int = 7):
+async def predict_stock_price(symbol: str, days: int = 30, current_user: User = Depends(get_current_user)):
     try:
         # 1. Fetch Data
         ticker = yf.Ticker(symbol)
@@ -52,12 +55,22 @@ async def predict_stock_price(symbol: str, days: int = 7):
         if len(hist) < 60:
              raise HTTPException(status_code=400, detail=f"Not enough historical data for LSTM training (need at least 60 days)")
 
-        # 2. Sentiment Analysis (Advanced Feature 4)
+        # 2. Fetch User Finance context for personalization
+        db = await get_database()
+        user_id = str(current_user.id) if current_user.id else current_user.email
+        finance_data = await db.finance.find_one(
+            {"user_id": user_id},
+            sort=[("date", -1)]
+        )
+        surplus = 0
+        if finance_data:
+            surplus = float(finance_data.get("monthly_income", 0)) - float(finance_data.get("monthly_expenses", 0))
+
+        # 3. Sentiment Analysis
         sentiment = "Neutral"
         try:
             headlines = ticker.news
             if isinstance(headlines, list) and len(headlines) > 0:
-                # Some newer yfinance versions return dicts, some return strings for title. Let's be safe.
                 titles = [n.get('title', '') for n in headlines[:5] if isinstance(n, dict)]
                 if titles:
                     combined_text = " ".join(titles)
@@ -65,7 +78,7 @@ async def predict_stock_price(symbol: str, days: int = 7):
         except Exception as e:
             print(f"Failed to fetch or parse news for {symbol}: {e}")
 
-        # 3. Prepare Data for LSTM
+        # 4. Prepare Data for LSTM
         data = hist.filter(['Close'])
         dataset = data.values
         scaler = MinMaxScaler(feature_range=(0,1))
@@ -83,7 +96,7 @@ async def predict_stock_price(symbol: str, days: int = 7):
         x_train, y_train = np.array(x_train), np.array(y_train)
         x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
 
-        # 4. Build & Train LSTM Model (Advanced Feature 1)
+        # 5. Build & Train LSTM Model 
         model = Sequential()
         model.add(LSTM(50, return_sequences=True, input_shape=(x_train.shape[1], 1)))
         model.add(LSTM(50, return_sequences=False))
@@ -91,25 +104,24 @@ async def predict_stock_price(symbol: str, days: int = 7):
         model.add(Dense(1))
 
         model.compile(optimizer='adam', loss='mean_squared_error')
-        model.fit(x_train, y_train, batch_size=32, epochs=1, verbose=0) # Epochs=1 for speed in demo
+        model.fit(x_train, y_train, batch_size=32, epochs=1, verbose=0)
 
-        # 5. Predict Future
+        # 6. Predict Future
         last_60_days = scaled_data[-60:]
         x_input = np.reshape(last_60_days, (1, 60, 1))
         
         preds_scaled = []
         curr_input = x_input
         
-        for _ in range(days):
+        for _ in range(30): # Hardcode to 30 for consistency
             pred = model.predict(curr_input, verbose=0)
             preds_scaled.append(pred[0, 0])
-            # Update input window
             new_input = np.append(curr_input[0, 1:, 0], pred)
             curr_input = np.reshape(new_input, (1, 60, 1))
 
         predictions = scaler.inverse_transform(np.array(preds_scaled).reshape(-1, 1))
 
-        # Indicators
+        # 7. Indicators & Formatting
         hist['SMA_20'] = hist['Close'].rolling(window=20).mean()
         hist['SMA_50'] = hist['Close'].rolling(window=50).mean()
 
@@ -121,11 +133,53 @@ async def predict_stock_price(symbol: str, days: int = 7):
                 "date": next_date.strftime("%Y-%m-%d"),
                 "predicted_price": float(price[0])
             })
+
+        # 8. Recommendation & Personalized Insight
+        last_predicted = float(predictions[-1][0])
+        current_price = float(hist.iloc[-1]['Close'])
+        price_change = ((last_predicted - current_price) / current_price) * 100
+        
+        # Personalized Platform Logic
+        best_platform = "Global Hub"
+        if current_user.country == "Sri Lanka":
+            if symbol.endswith(".N0000") or ".JKH" in symbol or ".COMB" in symbol:
+                best_platform = "Softlogic Invest (CSE)"
+            else:
+                best_platform = "Vanguard International"
+        elif symbol in ["BTC-USD", "ETH-USD"]:
+            best_platform = "Binance / Coinbase"
+        else:
+            best_platform = "Interactive Brokers"
+
+        # Amount Calculation (15-25% of surplus based on confidence)
+        rec_amount = 0
+        if price_change > 0 and surplus > 0:
+            multiplier = 0.15 if price_change < 5 else 0.25
+            rec_amount = round(surplus * multiplier, 2)
+
+        action = "HOLD"
+        emoji = "⚖️"
+        if price_change > 2.0 and sentiment == "Bullish":
+            action = "BUY"
+            emoji = "📈"
+        elif price_change < -2.0 and (sentiment == "Bearish" or price_change < -5.0):
+            action = "SELL"
+            emoji = "📉"
             
+        summary = f"The AI model predicts a {abs(price_change):.1f}% {'climb' if price_change > 0 else 'drop'} over the next 30 days. This suggests a {action} position is optimal."
+
         return {
             "symbol": symbol,
-            "current_price": float(hist.iloc[-1]['Close']),
+            "current_price": current_price,
             "market_sentiment": sentiment,
+            "recommendation": {
+                "action": action,
+                "emoji": emoji,
+                "summary": summary,
+                "predicted_change_pct": round(price_change, 2),
+                "personalized_amount": rec_amount,
+                "best_platform": best_platform
+            },
             "indicators": {
                 "SMA_20": float(hist['SMA_20'].iloc[-1]) if not pd.isna(hist['SMA_20'].iloc[-1]) else 0,
                 "SMA_50": float(hist['SMA_50'].iloc[-1]) if not pd.isna(hist['SMA_50'].iloc[-1]) else 0,
