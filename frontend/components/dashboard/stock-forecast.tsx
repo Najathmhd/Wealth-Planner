@@ -4,13 +4,32 @@ import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search, Loader2, AlertTriangle, Zap, TrendingUp, BarChart, Activity } from "lucide-react"
+import { Search, Loader2, AlertTriangle, Zap, TrendingUp, BarChart, Activity, Building, Globe, Coins, ArrowUpRight, ShieldCheck, ShoppingCart, Users, Play, Info, Target } from "lucide-react"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import api from "@/lib/api"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { useFinance } from "@/context/FinanceContext"
 
-export function StockForecast() {
+const AssetLogo = ({ symbol, domain }: { symbol: string, domain?: string }) => {
+    const [error, setError] = useState(false);
+    if (error || !domain) {
+        return (
+            <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center text-[8px] font-bold text-primary border border-primary/30 shrink-0">
+                {symbol.split('.')[0].slice(0, 2).toUpperCase()}
+            </div>
+        )
+    }
+    return (
+        <img 
+            src={`https://logo.clearbit.com/${domain}`} 
+            alt={symbol} 
+            className="h-6 w-6 rounded-full object-contain bg-white shrink-0 shadow-sm border border-white/10"
+            onError={() => setError(true)}
+        />
+    )
+}
+
+export function StockForecast({ platforms = [] }: { platforms?: string[] }) {
     const { currencySymbol } = useFinance()
     const [symbol, setSymbol] = useState("AAPL")
     const [data, setData] = useState<any>(null)
@@ -33,6 +52,14 @@ export function StockForecast() {
             setLoading(false)
         }
     }
+
+    const getPlatformIcon = (name: string) => {
+        const lowerName = name.toLowerCase();
+        if (lowerName.includes("stock") || lowerName.includes("cse") || lowerName.includes("exchange")) return <BarChart className="h-4 w-4" />;
+        if (lowerName.includes("trust") || lowerName.includes("bank")) return <Building className="h-4 w-4" />;
+        if (lowerName.includes("crypto") || lowerName.includes("bitcoin")) return <Coins className="h-4 w-4" />;
+        return <Globe className="h-4 w-4" />;
+    };
 
     return (
         <Card className="border-white/10 bg-white/5 shadow-2xl overflow-hidden">
@@ -58,22 +85,36 @@ export function StockForecast() {
                     </Button>
                 </div>
 
-                <div className="mb-8">
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-3">Popular Platforms & Companies</p>
+                <div className="mb-10">
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-4">Trending Assets (Global & Local)</p>
                     <div className="flex flex-wrap gap-2">
-                        {["AAPL", "MSFT", "GOOGL", "TSLA", "AMZN"].map((ticker) => (
+                        {[
+                            { symbol: "AAPL", domain: "apple.com" },
+                            { symbol: "MSFT", domain: "microsoft.com" },
+                            { symbol: "GOOGL", domain: "google.com" },
+                            { symbol: "TSLA", domain: "tesla.com" },
+                            { symbol: "NVDA", domain: "nvidia.com" },
+                            { symbol: "AMZN", domain: "amazon.com" },
+                            { symbol: "BTC-USD", domain: "bitcoin.org" },
+                            { symbol: "JKH.N0000", domain: "keells.com" },
+                            { symbol: "COMB.N0000", domain: "combank.lk" },
+                            { symbol: "SAMP.N0000", domain: "sampath.lk" },
+                            { symbol: "HNB.N0000", domain: "hnb.net" },
+                            { symbol: "DIAL.N0000", domain: "dialog.lk" },
+                        ].map((asset) => (
                             <Button
-                                key={ticker}
+                                key={asset.symbol}
                                 variant="outline"
                                 size="sm"
                                 disabled={loading}
                                 onClick={() => {
-                                    setSymbol(ticker);
-                                    handlePredict(ticker);
+                                    setSymbol(asset.symbol);
+                                    handlePredict(asset.symbol);
                                 }}
-                                className="bg-white/5 border-white/10 text-white hover:bg-primary/20 hover:text-primary hover:border-primary/20 transition-all font-bold tracking-wider"
+                                className={`bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:border-white/20 transition-all font-bold tracking-wider flex items-center gap-2 px-3 py-6 rounded-2xl group min-w-[120px]`}
                             >
-                                {ticker}
+                                <AssetLogo symbol={asset.symbol} domain={asset.domain} />
+                                {asset.symbol.split('.')[0]}
                             </Button>
                         ))}
                     </div>
@@ -92,6 +133,102 @@ export function StockForecast() {
                         transition={{ duration: 0.5 }}
                         className="space-y-8"
                     >
+                        {/* AI Strategy Insight */}
+                        <div className="p-6 rounded-3xl bg-gradient-to-br from-primary/20 to-indigo-500/10 border border-white/10 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-4 opacity-10 rotate-12 group-hover:scale-125 transition-transform">
+                                <Zap className="h-20 w-20 text-primary" />
+                            </div>
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                                <div className="flex items-center gap-4">
+                                    <div className={`h-14 w-14 rounded-2xl flex items-center justify-center text-2xl border ${
+                                        data.recommendation?.action === 'BUY' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400' :
+                                        data.recommendation?.action === 'SELL' ? 'bg-orange-500/20 border-orange-500/30 text-orange-400' :
+                                        'bg-blue-500/20 border-blue-500/30 text-blue-400'
+                                    }`}>
+                                        {data.recommendation?.emoji}
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className={`px-2 py-0.5 rounded text-[10px] font-black tracking-tight ${
+                                                data.recommendation?.action === 'BUY' ? 'bg-emerald-500 text-white' :
+                                                data.recommendation?.action === 'SELL' ? 'bg-orange-500 text-white' :
+                                                'bg-blue-500 text-white'
+                                            }`}>
+                                                {data.recommendation?.action} SIGNAL
+                                            </span>
+                                            <h4 className="text-lg font-bold text-white uppercase tracking-tighter">AI Strategy Insight</h4>
+                                        </div>
+                                        <p className="text-sm text-white/80 font-medium leading-snug max-w-xl italic">
+                                            "{data.recommendation?.summary}"
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="px-6 py-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+                                    <p className="text-[10px] items-center gap-1 flex uppercase font-bold text-white/50 tracking-widest"><Info className="h-3 w-3" /> Projected Change</p>
+                                    <p className={`text-2xl font-black ${data.recommendation?.predicted_change_pct > 0 ? 'text-emerald-400' : 'text-orange-400'}`}>
+                                        {data.recommendation?.predicted_change_pct > 0 ? '+' : ''}{data.recommendation?.predicted_change_pct}%
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Personalized Strategy Insight */}
+                        {data.recommendation?.personalized_amount > 0 && (
+                            <div className="p-6 rounded-3xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-between gap-6 group relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                                    <Target className="h-16 w-16 text-indigo-400" />
+                                </div>
+                                <div>
+                                    <h4 className="text-[10px] items-center gap-1 flex uppercase font-bold text-indigo-400 tracking-widest mb-1">
+                                        <Target className="h-3 w-3" /> Personalized Investment Suggestion
+                                    </h4>
+                                    <p className="text-sm text-white/70 max-w-md">Based on your current monthly surplus, we suggest allocating a high-confidence position here.</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] uppercase font-bold text-white/50 tracking-widest">Recommended Amount</p>
+                                    <p className="text-3xl font-black text-white">{currencySymbol}{data.recommendation.personalized_amount.toLocaleString()}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Direct Investing Access */}
+                        <div className="p-6 rounded-3xl bg-white/5 border border-white/10 border-dashed">
+                            <div className="flex items-center justify-between mb-6">
+                                <div>
+                                    <h4 className="text-sm font-bold text-white uppercase tracking-widest">Localized Trading Hubs</h4>
+                                    <p className="text-[10px] text-white/50">Brokerages recommended for {symbol.split('.')[0]} in your region.</p>
+                                </div>
+                                <ShieldCheck className="h-6 w-6 text-primary opacity-50" />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {platforms.length > 0 ? (
+                                    platforms.map((platform, i) => (
+                                        <div 
+                                            key={i} 
+                                            className={`flex items-center justify-between p-4 rounded-2xl bg-black/40 border group transition-all cursor-pointer relative ${
+                                                platform === data.recommendation?.best_platform ? 'border-primary/60 shadow-[0_0_20px_rgba(139,92,246,0.15)] bg-primary/5' : 'border-white/5 hover:border-primary/50'
+                                            }`}
+                                        >
+                                            {platform === data.recommendation?.best_platform && (
+                                                <span className="absolute -top-2 -right-2 px-2 py-0.5 bg-primary text-[8px] font-black rounded text-white shadow-lg">#1 BEST MATCH</span>
+                                            )}
+                                            <div className="flex items-center gap-3">
+                                                <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30 text-primary group-hover:scale-110 transition-transform">
+                                                    {getPlatformIcon(platform)}
+                                                </div>
+                                                <p className="text-xs font-bold text-white">{platform}</p>
+                                            </div>
+                                            <ArrowUpRight className="h-4 w-4 text-white/30 group-hover:text-primary transition-colors" />
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="col-span-full py-4 text-center">
+                                        <p className="text-xs text-white/30 italic">No localized platforms suggested for your current profile.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-left relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:scale-125 transition-transform">
