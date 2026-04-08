@@ -179,22 +179,41 @@ export default function DashboardPage() {
                 )}
 
                 <motion.div variants={item}>
-                    <Card className="glass-card bg-gradient-to-br from-emerald-500/20 via-emerald-500/5 to-transparent h-full">
+                    <Card className={`glass-card h-full relative overflow-hidden group border-t-2 ${
+                        (summary?.health_score || 0) > 70 ? 'border-t-emerald-500' :
+                        (summary?.health_score || 0) > 40 ? 'border-t-amber-500' : 'border-t-orange-500'
+                    }`}>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-white/90">Financial Freedom</CardTitle>
-                            <div className="p-2 bg-emerald-500/20 rounded-lg">
-                                <Sparkles className="h-4 w-4 text-emerald-400" />
+                            <CardTitle className="text-sm font-medium text-white/90">Financial Health</CardTitle>
+                            <div className={`p-2 rounded-lg ${
+                                (summary?.health_score || 0) > 70 ? 'bg-emerald-500/20' : 'bg-amber-500/20'
+                            }`}>
+                                <Activity className={`h-4 w-4 ${
+                                    (summary?.health_score || 0) > 70 ? 'text-emerald-400' : 'text-amber-400'
+                                }`} />
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-white">
-                                {summary?.monthly_expenses && summary?.monthly_expenses > 0
-                                    ? Math.max(0, Math.min(Math.round((summary.total_savings / (summary.monthly_expenses * 300)) * 100), 100)).toFixed(1)
-                                    : "0.0"}%
+                            <div className="flex items-baseline gap-1">
+                                <div className="text-2xl font-bold text-white">
+                                    {summary?.health_score ?? "0"}
+                                </div>
+                                <span className="text-xs text-muted-foreground">/100</span>
                             </div>
-                            <Link href="/dashboard/recommendations" className="text-xs text-emerald-400/80 font-medium mt-1 hover:underline flex items-center gap-1">
-                                View FIRE Plan <ArrowUpRight className="h-3 w-3" />
-                            </Link>
+                            <div className="mt-2 h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                                <motion.div 
+                                    className={`h-full ${
+                                        (summary?.health_score || 0) > 70 ? 'bg-emerald-500' :
+                                        (summary?.health_score || 0) > 40 ? 'bg-amber-500' : 'bg-orange-500'
+                                    }`}
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${summary?.health_score ?? 0}%` }}
+                                />
+                            </div>
+                            <p className="text-[10px] text-muted-foreground mt-2 font-medium uppercase tracking-tight">
+                                {(summary?.health_score || 0) > 70 ? 'Excellent Standing' : 
+                                 (summary?.health_score || 0) > 40 ? 'Stable / Needs Growth' : 'High Priority Action'}
+                            </p>
                         </CardContent>
                     </Card>
                 </motion.div>

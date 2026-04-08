@@ -97,11 +97,6 @@ export function StockForecast({ platforms = [] }: { platforms?: string[] }) {
                             { symbol: "NVDA", domain: "nvidia.com" },
                             { symbol: "AMZN", domain: "amazon.com" },
                             { symbol: "BTC-USD", domain: "bitcoin.org" },
-                            { symbol: "JKH.N0000", domain: "keells.com" },
-                            { symbol: "COMB.N0000", domain: "combank.lk" },
-                            { symbol: "SAMP.N0000", domain: "sampath.lk" },
-                            { symbol: "HNB.N0000", domain: "hnb.net" },
-                            { symbol: "DIAL.N0000", domain: "dialog.lk" },
                         ].map((asset) => (
                             <Button
                                 key={asset.symbol}

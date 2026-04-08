@@ -81,11 +81,20 @@ export default function RecommendationsPage() {
                         {/* Profile Summary */}
                         <Card className="glass-card border-white/10 bg-white/5 lg:col-span-1">
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Shield className="h-5 w-5 text-primary" />
-                                    Your Profile: {data?.category || "Analyzing..."}
+                                <CardTitle className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Target className="h-5 w-5 text-primary" />
+                                        Your Profile: {fire.saver_category || "Analyzing..."}
+                                    </div>
+                                    <div className={`text-xs px-2 py-0.5 rounded-full border font-bold ${
+                                        (fire.health_score || 0) > 70 ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
+                                        (fire.health_score || 0) > 40 ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' :
+                                        'bg-orange-500/10 border-orange-500/20 text-orange-400'
+                                    }`}>
+                                        Health Score: {fire.health_score || 0}/100
+                                    </div>
                                 </CardTitle>
-                                <CardDescription>Strategic category based on Risk DNA.</CardDescription>
+                                <CardDescription>Behavioral classification based on savings DNA.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <p className="text-sm text-white/80 leading-relaxed">
@@ -149,7 +158,19 @@ export default function RecommendationsPage() {
                                                 </div>
                                                 <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">{step.period}</p>
                                                 <p className="text-xl font-bold text-white mb-2">{currencySymbol}{step.projected_wealth.toLocaleString()}</p>
-                                                <div className="flex items-center gap-1.5 text-[10px] font-medium text-white/50">
+                                                
+                                                <div className="space-y-2 mb-3">
+                                                    <div className="flex justify-between items-center text-[10px]">
+                                                        <span className="text-white/40 font-medium uppercase">Savings Only</span>
+                                                        <span className="text-white/60 font-bold">{currencySymbol}{step.savings_only.toLocaleString()}</span>
+                                                    </div>
+                                                    <div className="flex justify-between items-center text-[10px]">
+                                                        <span className="text-emerald-400/60 font-medium uppercase">Growth Profit</span>
+                                                        <span className="text-emerald-400 font-bold">+{currencySymbol}{step.opportunity_cost.toLocaleString()}</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-1.5 text-[10px] font-medium text-white/50 border-t border-white/5 pt-2">
                                                     <div className="h-1 w-1 rounded-full bg-primary" />
                                                     {step.suggestion}
                                                 </div>
@@ -202,6 +223,16 @@ export default function RecommendationsPage() {
                                         {(data?.sectors || []).map((sec: string, i: number) => (
                                             <span key={i} className="px-2 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] text-white/70 font-bold flex items-center gap-1">
                                                 <div className="h-1 w-1 bg-primary rounded-full" /> {sec}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="space-y-3">
+                                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Example AI-Selected Assets</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {(data?.examples || []).map((ex: string, i: number) => (
+                                            <span key={i} className="px-2 py-1 rounded-md bg-primary/10 border border-primary/20 text-[10px] text-primary font-bold">
+                                                {ex}
                                             </span>
                                         ))}
                                     </div>
