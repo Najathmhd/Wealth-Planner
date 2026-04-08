@@ -20,6 +20,8 @@ interface FinanceContextType {
     loading: boolean
     currencySymbol: string
     refreshData: () => Promise<void>
+    forecastData: any
+    setForecastData: (data: any) => void
 }
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined)
@@ -78,6 +80,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         await fetchAllData()
     }
 
+    const [forecastData, setForecastData] = useState<any>(null)
+
     let currencySymbol = "$"
     if (user?.country === "Sri Lanka") currencySymbol = "රු"
     else if (user?.country === "United Kingdom") currencySymbol = "£"
@@ -86,7 +90,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     else if (user?.country === "Canada") currencySymbol = "C$"
 
     return (
-        <FinanceContext.Provider value={{ summary, history, latest, user, loading, currencySymbol, refreshData }}>
+        <FinanceContext.Provider value={{ summary, history, latest, user, loading, currencySymbol, refreshData, forecastData, setForecastData }}>
             {children}
         </FinanceContext.Provider>
     )
