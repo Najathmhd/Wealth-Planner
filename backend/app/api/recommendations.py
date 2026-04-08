@@ -65,12 +65,31 @@ async def perform_analysis(assessment: RiskAssessment, current_user: User, db):
         
         if primary_salary > 0:
             hidden_savings = primary_salary * multiplier
-            if hidden_savings > 0:
-                print(f"Applying {country} Local Factor ({multiplier}): +{hidden_savings} /mo")
-
+            
         total_monthly_savings = monthly_savings + hidden_savings
+        savings_rate = (total_monthly_savings / monthly_income) if monthly_income > 0 else 0
         
-        # --- 2.2 Expense Audit ---
+        # --- 2.2 Intelligent Scoring & Classification ---
+        # Health Score Logic (0-100)
+        health_score = min(100, max(10, int(savings_rate * 250))) # 40% savings rate = 100 points
+        if monthly_expenses > (monthly_income * 0.7): health_score -= 15
+        if current_savings > (monthly_expenses * 6): health_score += 15 # Emergency Fund Bonus
+        health_score = min(100, max(0, health_score))
+        
+        saver_category = "Conservative Saver"
+        if savings_rate > 0.30: saver_category = "Hyper-Aggressive Saver"
+        elif savings_rate > 0.15: saver_category = "Strategic Saver"
+        
+        # --- 2.3 Optimization Wisdom ---
+        opt_savings_rate = savings_rate + 0.05
+        opt_monthly_savings = monthly_income * opt_savings_rate
+        
+        expense_tips.append({
+            "category": "Optimization",
+            "tip": f"By increasing your savings by just 5% ({int(monthly_income * 0.05)} {config.get('symbol', '$')}), you accelerate your freedom by approx. {round(12 / (savings_rate + 0.01), 1)} months."
+        })
+
+        # --- 2.4 Expense Audit ---
         expense_list = latest_finance.get("expenses", [])
         for exp in expense_list:
             amt = exp.get("amount", 0)
@@ -78,27 +97,30 @@ async def perform_analysis(assessment: RiskAssessment, current_user: User, db):
             if amt > (monthly_income * 0.2) and monthly_income > 0:
                 expense_tips.append({
                     "category": cat,
-                    "tip": f"Your {cat} spending is high (>20% of income). Consider switching to a budget plan or finding cheaper alternatives."
+                    "tip": f"Your {cat} spending is high (>20% of income). Saving even 10% here improves your health score by +5."
                 })
-        
-        if not expense_tips and monthly_expenses > 0:
-            expense_tips.append({"category": "General", "tip": "Your spending is balanced. Consider automating a 'pay yourself first' transfer to savings."})
 
-        # --- 2.3 Growth Roadmap (1, 5, 10 Years) ---
+        # --- 2.5 Growth Roadmap (Comparative Analysis) ---
         annual_rates = {"Conservative": 0.03, "Moderate": 0.06, "Aggressive": 0.10}
         r = annual_rates.get(category, 0.05) / 12
         
         for years in [1, 5, 10]:
             n = years * 12
-            # Use total_monthly_savings (reported + hidden)
-            projected = current_savings * (1 + r)**n + total_monthly_savings * (((1 + r)**n - 1) / r) if r > 0 else (current_savings + total_monthly_savings * n)
+            # Projection WITH Investment
+            projected_inv = current_savings * (1 + r)**n + total_monthly_savings * (((1 + r)**n - 1) / r) if r > 0 else (current_savings + total_monthly_savings * n)
+            
+            # Projection WITHOUT Investment (Savings Only - Benchmark)
+            projected_savings = current_savings + (total_monthly_savings * n)
+            
             roadmap.append({
                 "period": f"{years} Year{'s' if years > 1 else ''}",
-                "projected_wealth": round(max(0, projected), 2),
+                "projected_wealth": round(max(0, projected_inv), 2),
+                "savings_only": round(max(0, projected_savings), 2),
+                "opportunity_cost": round(max(0, projected_inv - projected_savings), 2),
                 "suggestion": "Buy Index Funds" if years >= 5 else "High Yield Savings"
             })
 
-        # --- 2.4 FIRE Calculation ---
+        # --- 2.6 FIRE Calculation ---
         net_return = 0.04 / 12
         annual_expenses = monthly_expenses * 12
         fire_number = annual_expenses * 25
@@ -108,7 +130,6 @@ async def perform_analysis(assessment: RiskAssessment, current_user: User, db):
             years_to_fire = 0
         elif total_monthly_savings > 0 and fire_number > 0:
             for n in range(1, 481): 
-                # Use total_monthly_savings
                 projected = current_savings * (1 + net_return)**n + total_monthly_savings * (((1 + net_return)**n - 1) / net_return)
                 if projected >= fire_number:
                     years_to_fire = round(n / 12, 1)
@@ -118,7 +139,10 @@ async def perform_analysis(assessment: RiskAssessment, current_user: User, db):
             "fire_number": fire_number,
             "current_progress": round((current_savings / fire_number) * 100, 1) if fire_number > 0 else 0,
             "years_to_freedom": years_to_fire,
-            "monthly_contribution": monthly_savings,
+            "monthly_contribution": total_monthly_savings,
+            "savings_rate": round(savings_rate * 100, 1),
+            "health_score": health_score,
+            "saver_category": saver_category,
             "social_security_bonus": round(hidden_savings, 2) if hidden_savings > 0 else 0
         }
 
@@ -182,14 +206,17 @@ async def perform_analysis(assessment: RiskAssessment, current_user: User, db):
         alternative_assets = ["Physical Gold (Safety)", "Government Bonds", local_pension]
         platforms = cons_plats
         sectors = ["Utilities", "Consumer Staples"]
+        examples = ["Fixed Deposits (FD)", "Index ETFs (e.g. VTI)", "Dividend Stocks (e.g. KO)"]
     elif category == "Moderate":
         alternative_assets = ["Gold ETFs", "Real Estate (REITs)", local_pension]
         platforms = mod_plats
         sectors = ["Technology", "Healthcare"]
+        examples = ["Blue Chip Stocks (e.g. MSFT, AAPL)", "S&P 500 ETF (VOO)", "Local Unit Trusts"]
     else: # Aggressive
         alternative_assets = ["Digital Gold/Bitcoin", "Venture Capital Funds", local_pension]
         platforms = agg_plats
         sectors = ["AI & Robotics", "Green Energy"]
+        examples = ["Growth Stocks (e.g. NVDA, TSLA)", "Crypto Assets (BTC/ETH)", "Small-Cap Innovation"]
 
     return {
         "category": category,
@@ -201,6 +228,7 @@ async def perform_analysis(assessment: RiskAssessment, current_user: User, db):
         "alternatives": alternative_assets,
         "platforms": platforms,
         "sectors": sectors,
+        "examples": examples,
         "advice": f"As a {category.lower()} investor, your roadmap prioritizes {sectors[0]} and {alternative_assets[0]} for optimal growth."
     }
 
