@@ -71,36 +71,36 @@ export default function DashboardPage() {
             animate="show"
             className="flex-1 space-y-6"
         >
-            <div className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0 text-left">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-2">
                 <div className="space-y-1">
                     <h2 className="text-3xl font-bold tracking-tight text-white glow-text leading-tight">{welcomeMessage}</h2>
                     <p className="text-sm text-muted-foreground font-medium">
                         {history.length > 0 ? "Your wealth trajectory is looking solid." : "Start your financial journey by adding your first snapshot."}
                     </p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <div className="hidden lg:flex flex-col items-end mr-2">
-                        <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Last Synced</span>
-                        <span className="text-xs text-white/60 font-medium">{lastUpdated || "Syncing..."}</span>
+                <div className="flex items-center gap-3 bg-white/5 p-2 rounded-2xl border border-white/10 backdrop-blur-sm">
+                    <div className="hidden lg:flex flex-col items-end px-3 border-r border-white/10">
+                        <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">System Status</span>
+                        <span className="text-xs text-emerald-400 font-medium">Synced {lastUpdated || "..."}</span>
                     </div>
                     <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => refreshData()}
-                        className="text-white/40 hover:text-primary hover:bg-primary/10 rounded-full h-10 w-10 transition-colors"
+                        className="text-white/40 hover:text-primary hover:bg-primary/10 rounded-full h-9 w-9 transition-colors"
                         title="Manual Sync"
                     >
                         <Zap className="h-4 w-4" />
                     </Button>
                     <Link href="/dashboard/finance">
-                        <Button variant="outline" className="border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 transition-all active:scale-95">
+                        <Button className="bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all active:scale-95 px-6">
                             Manage Finances
                         </Button>
                     </Link>
                 </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+            <div className={`grid gap-4 md:grid-cols-2 ${summary?.hidden_wealth !== undefined && summary.hidden_wealth > 0 ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}>
                 <motion.div variants={item}>
                     <Card className="glass-card bg-gradient-to-br from-primary/20 via-primary/5 to-transparent h-full">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -159,7 +159,9 @@ export default function DashboardPage() {
                                 <Shield className="h-12 w-12" />
                             </div>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium text-white/90">Social Security</CardTitle>
+                                <CardTitle className="text-sm font-medium text-white/90">
+                                    {user?.employment_type === "Government Sector" ? "WNOP Pension" : "Social Security"}
+                                </CardTitle>
                                 <div className="p-2 bg-indigo-500/20 rounded-lg">
                                     <Shield className="h-4 w-4 text-indigo-400" />
                                 </div>
@@ -168,7 +170,9 @@ export default function DashboardPage() {
                                 <div className="text-2xl font-bold text-white">
                                     {currencySymbol}{summary?.hidden_wealth?.toLocaleString()}
                                 </div>
-                                <p className="text-xs text-indigo-400/80 font-medium mt-1">EPF/ETF Hidden Growth</p>
+                                <p className="text-xs text-indigo-400/80 font-medium mt-1">
+                                    {user?.employment_type === "Government Sector" ? "Government Security Factor" : "EPF/ETF Hidden Growth"}
+                                </p>
                             </CardContent>
                         </Card>
                     </motion.div>
