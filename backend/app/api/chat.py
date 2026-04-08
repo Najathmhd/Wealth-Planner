@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Body
 from app.api.auth import get_current_user
 from app.models.user import User
 from app.db.mongodb import get_database
+from app.utils.config import COUNTRY_CONFIG
 import google.generativeai as genai
 import os
 from dotenv import load_dotenv
@@ -38,9 +39,20 @@ async def ask_advisor(
         risk_profile = await risk_collection.find_one({"user_id": user_id})
         
         # 2. Build Context Prompt
-        context = f"User Name: {current_user.full_name}\n"
         country = getattr(current_user, "country", "United States")
         employment_type = getattr(current_user, "employment_type", "Private Sector")
+        
+        hidden_wealth = 0
+        if latest_finance:
+            primary_salary = sum(item.get("amount", 0) for item in latest_finance.get("incomes", []) 
+                               if "salary" in item.get("name", "").lower() or "primary" in item.get("name", "").lower())
+            
+            config = COUNTRY_CONFIG.get(country, COUNTRY_CONFIG["United States"])
+            multiplier = config.get(employment_type, config.get("default", 0))
+            if primary_salary > 0:
+                hidden_wealth = primary_salary * multiplier
+
+        context = f"User Name: {current_user.full_name}\n"
         context += f"Country: {country}\n"
         context += f"Employment Type: {employment_type}\n"
         
@@ -48,6 +60,7 @@ async def ask_advisor(
             context += f"Monthly Income: {latest_finance.get('monthly_income')}\n"
             context += f"Monthly Expenses: {latest_finance.get('monthly_expenses')}\n"
             context += f"Total Savings: {latest_finance.get('total_savings')}\n"
+            context += f"Hidden Social Security/Pension Wealth: {hidden_wealth}\n"
             if "savings_goals" in latest_finance and latest_finance["savings_goals"]:
                 goals_text = ", ".join([f"{g.get('name')}: {g.get('target_amount')}" for g in latest_finance["savings_goals"]])
                 context += f"Savings Goals: {goals_text}\n"
@@ -67,6 +80,7 @@ USER PROFILE:
 - Monthly Income: {latest_finance.get('monthly_income') if latest_finance else '0'}
 - Monthly Expenses: {latest_finance.get('monthly_expenses') if latest_finance else '0'}
 - Total Savings: {latest_finance.get('total_savings') if latest_finance else '0'}
+- Hidden Social Security Wealth: {hidden_wealth}
 - Risk Appetite: {risk_profile.get('risk_appetite') if risk_profile else '5'}/10
 - Financial Goals: {", ".join([f"{g.get('name')} (Target: {g.get('target_amount')})" for g in latest_finance.get('savings_goals', [])]) if latest_finance else 'General Wealth Growth'}
 ------------------------
@@ -81,16 +95,16 @@ IMPORTANT RULES:
 
 ------------------------
 LOCALIZATION RULES:
-If Country = Sri Lanka:
-- Private Sector:
-  - Include EPF (20% total: 8% employee + 12% employer) and ETF (3%) as long-term savings.
-  - Encourage investment beyond EPF (stocks, mutual funds).
-- Government Sector:
-  - Consider pension scheme instead of EPF/ETF.
-  - Include WNOP (Wages Not Otherwise Paid) such as allowances and bonuses as part of income.
-- Self-Employed / Freelance:
-  - Focus on emergency fund (3–6 months expenses).
-  - Suggest voluntary retirement savings and investments.
+Explain values based on the User's Country:
+- Sri Lanka: Mention WNOP Pension (Gov) or EPF/ETF (Private).
+- India: Mention EPF/PF (Provident Fund) employer contributions. (Multiplier: 0.12)
+- USA: Mention Social Security and 401(k). (Multiplier: 0.10)
+- Australia: Mention Superannuation Guarantee. (Multiplier: 0.11)
+- UK: Mention Workplace Pension. (Multiplier: 0.03)
+- Canada: Mention CPP. (Multiplier: 0.0595)
+
+Always explain that 'Hidden Wealth' represents estimated employer contributions that significantly accelerate their FIRE timeline.
+- Self-Employed / Freelance: Focus on emergency fund and private pension schemes.
 
 ------------------------
 INVESTMENT RULES:
