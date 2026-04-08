@@ -93,12 +93,23 @@ async def get_finance_summary(currency: str = "USD", current_user: User = Depend
     if primary_salary > 0:
         hidden_wealth = primary_salary * multiplier
 
+    # High-level Health Score for Dashboard (Simplified from Recommendations)
+    monthly_income = float(finance_data.get("monthly_income", 0.0))
+    monthly_expenses = float(finance_data.get("monthly_expenses", 0.0))
+    monthly_savings = monthly_income - monthly_expenses + hidden_wealth
+    
+    savings_rate = (monthly_savings / monthly_income) if monthly_income > 0 else 0
+    health_score = min(100, max(10, int(savings_rate * 250)))
+    if monthly_expenses > (monthly_income * 0.7): health_score -= 15
+    health_score = min(100, max(0, health_score))
+
     return {
         "total_savings": float(finance_data.get("total_savings", 0.0)) * rate,
-        "monthly_income": float(finance_data.get("monthly_income", 0.0)) * rate,
-        "monthly_expenses": float(finance_data.get("monthly_expenses", 0.0)) * rate,
+        "monthly_income": monthly_income * rate,
+        "monthly_expenses": monthly_expenses * rate,
         "investment_roi": 12.5,
         "hidden_wealth": round(hidden_wealth * rate, 2),
+        "health_score": health_score,
         "currency": currency
     }
 
