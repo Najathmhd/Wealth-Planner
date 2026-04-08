@@ -30,9 +30,9 @@ const AssetLogo = ({ symbol, domain }: { symbol: string, domain?: string }) => {
 }
 
 export function StockForecast({ platforms = [] }: { platforms?: string[] }) {
-    const { currencySymbol } = useFinance()
-    const [symbol, setSymbol] = useState("AAPL")
-    const [data, setData] = useState<any>(null)
+    const { currencySymbol, forecastData, setForecastData } = useFinance()
+    const [symbol, setSymbol] = useState(forecastData?.symbol || "AAPL")
+    const [data, setData] = useState<any>(forecastData)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
 
@@ -44,6 +44,7 @@ export function StockForecast({ platforms = [] }: { platforms?: string[] }) {
         try {
             const res = await api.get(`/stocks/predict/${targetSymbol}?days=30&window=60`)
             setData(res.data)
+            setForecastData(res.data)
         } catch (err: any) {
             console.error(err)
             const detail = err.response?.data?.detail
@@ -134,41 +135,29 @@ export function StockForecast({ platforms = [] }: { platforms?: string[] }) {
                         className="space-y-8"
                     >
                         {/* AI Strategy Insight */}
-                        <div className="p-6 rounded-3xl bg-gradient-to-br from-primary/20 to-indigo-500/10 border border-white/10 relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 p-4 opacity-10 rotate-12 group-hover:scale-125 transition-transform">
-                                <Zap className="h-20 w-20 text-primary" />
-                            </div>
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                                <div className="flex items-center gap-4">
-                                    <div className={`h-14 w-14 rounded-2xl flex items-center justify-center text-2xl border ${
-                                        data.recommendation?.action === 'BUY' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400' :
-                                        data.recommendation?.action === 'SELL' ? 'bg-orange-500/20 border-orange-500/30 text-orange-400' :
-                                        'bg-blue-500/20 border-blue-500/30 text-blue-400'
-                                    }`}>
-                                        {data.recommendation?.emoji}
+                        <div className="p-5 rounded-2xl bg-white/5 border border-white/10 flex flex-col md:flex-row items-center justify-between gap-6">
+                            <div className="flex items-center gap-4 w-full md:w-auto">
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className={`text-[10px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter ${
+                                            data.recommendation?.action === 'BUY' ? 'bg-emerald-500 text-white' :
+                                            data.recommendation?.action === 'SELL' ? 'bg-orange-500 text-white' :
+                                            'bg-blue-500 text-white'
+                                        }`}>
+                                            {data.recommendation?.action}
+                                        </span>
+                                        <h4 className="text-sm font-bold text-white uppercase tracking-widest opacity-80">AI Strategy Insight</h4>
                                     </div>
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className={`px-2 py-0.5 rounded text-[10px] font-black tracking-tight ${
-                                                data.recommendation?.action === 'BUY' ? 'bg-emerald-500 text-white' :
-                                                data.recommendation?.action === 'SELL' ? 'bg-orange-500 text-white' :
-                                                'bg-blue-500 text-white'
-                                            }`}>
-                                                {data.recommendation?.action} SIGNAL
-                                            </span>
-                                            <h4 className="text-lg font-bold text-white uppercase tracking-tighter">AI Strategy Insight</h4>
-                                        </div>
-                                        <p className="text-sm text-white/80 font-medium leading-snug max-w-xl italic">
-                                            "{data.recommendation?.summary}"
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="px-6 py-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
-                                    <p className="text-[10px] items-center gap-1 flex uppercase font-bold text-white/50 tracking-widest"><Info className="h-3 w-3" /> Projected Change</p>
-                                    <p className={`text-2xl font-black ${data.recommendation?.predicted_change_pct > 0 ? 'text-emerald-400' : 'text-orange-400'}`}>
-                                        {data.recommendation?.predicted_change_pct > 0 ? '+' : ''}{data.recommendation?.predicted_change_pct}%
+                                    <p className="text-xs text-white/70 font-medium leading-relaxed max-w-lg">
+                                        {data.recommendation?.summary}
                                     </p>
                                 </div>
+                            </div>
+                            <div className="w-full md:w-auto px-5 py-3 rounded-xl bg-black/20 border border-white/5 text-center md:text-right">
+                                <p className="text-[10px] uppercase font-bold text-white/40 tracking-widest mb-0.5">Projected Momentum</p>
+                                <p className={`text-xl font-black ${data.recommendation?.predicted_change_pct > 0 ? 'text-emerald-400' : 'text-orange-400'}`}>
+                                    {data.recommendation?.predicted_change_pct > 0 ? '+' : ''}{data.recommendation?.predicted_change_pct}%
+                                </p>
                             </div>
                         </div>
 
