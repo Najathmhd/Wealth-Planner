@@ -3,6 +3,7 @@ from app.db.mongodb import get_database
 from app.models.finance import UserFinance, IncomeSource, ExpenseItem, SavingsGoal
 from app.api.auth import get_current_user
 from app.models.user import User
+from app.utils.config import COUNTRY_CONFIG
 
 router = APIRouter()
 
@@ -78,17 +79,19 @@ async def get_finance_summary(currency: str = "USD", current_user: User = Depend
             "currency": currency
         }
 
-    # Calculate Localized Hidden Wealth (Sri Lanka EPF/ETF)
+    # Calculate Universal Localized Hidden Wealth
     country = getattr(current_user, "country", "United States")
     employment_type = getattr(current_user, "employment_type", "Private Sector")
     
     hidden_wealth = 0
-    if country == "Sri Lanka" and employment_type == "Private Sector":
-        # Sum of income sources named 'Salary'
-        primary_salary = sum(item.get("amount", 0) for item in finance_data.get("incomes", []) 
-                           if "salary" in item.get("name", "").lower() or "primary" in item.get("name", "").lower())
-        if primary_salary > 0:
-            hidden_wealth = primary_salary * 0.163 # 12% EPF + 3% ETF indexed to Net
+    primary_salary = sum(item.get("amount", 0) for item in finance_data.get("incomes", []) 
+                       if "salary" in item.get("name", "").lower() or "primary" in item.get("name", "").lower())
+    
+    config = COUNTRY_CONFIG.get(country, COUNTRY_CONFIG["United States"])
+    multiplier = config.get(employment_type, config.get("default", 0))
+    
+    if primary_salary > 0:
+        hidden_wealth = primary_salary * multiplier
 
     return {
         "total_savings": float(finance_data.get("total_savings", 0.0)) * rate,
@@ -132,8 +135,8 @@ async def get_finance_history(currency: str = "USD", current_user: User = Depend
             "income": float(record.get("monthly_income", 0)) * rate,
             "expenses": float(record.get("monthly_expenses", 0)) * rate,
             "hidden_wealth": round((sum(item.get("amount", 0) for item in record.get("incomes", []) 
-                                     if "salary" in item.get("name", "").lower()) * 0.163 * rate) 
-                                 if country == "Sri Lanka" and employment_type == "Private Sector" else 0, 2),
+                                     if "salary" in item.get("name", "").lower() or "primary" in item.get("name", "").lower()) * 
+                                     COUNTRY_CONFIG.get(country, COUNTRY_CONFIG["United States"]).get(employment_type, COUNTRY_CONFIG.get(country, COUNTRY_CONFIG["United States"]).get("default", 0)) * rate), 2),
             "currency": currency
         } for record in history
     ]
