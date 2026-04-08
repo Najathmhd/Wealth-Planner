@@ -140,31 +140,43 @@ async def predict_stock_price(symbol: str, days: int = 30, current_user: User = 
         price_change = ((last_predicted - current_price) / current_price) * 100
         
         # Personalized Platform Logic
-        best_platform = "Global Hub"
-        if current_user.country == "Sri Lanka":
+        best_platform = "Interactive Brokers (Global)"
+        country = getattr(current_user, "country", "United States")
+        
+        if country == "Sri Lanka":
             if symbol.endswith(".N0000") or ".JKH" in symbol or ".COMB" in symbol:
                 best_platform = "Softlogic Invest (CSE)"
             else:
                 best_platform = "Vanguard International"
+        elif country == "India":
+            best_platform = "Zerodha / Groww"
+        elif country == "United Kingdom":
+            best_platform = "Hargreaves Lansdown / Vanguard UK"
+        elif country == "Australia":
+            best_platform = "CommSec / Vanguard AU"
+        elif country == "Canada":
+            best_platform = "Wealthsimple / Questrade"
         elif symbol in ["BTC-USD", "ETH-USD"]:
             best_platform = "Binance / Coinbase"
         else:
-            best_platform = "Interactive Brokers"
+            best_platform = "Vanguard / Fidelity"
 
         # Amount Calculation (15-25% of surplus based on confidence)
         rec_amount = 0
         if price_change > 0 and surplus > 0:
-            multiplier = 0.15 if price_change < 5 else 0.25
+            # If user has a guaranteed safety net (Government Pension), 
+            # we can be slightly more aggressive with the liquid surplus.
+            employment_type = getattr(current_user, "employment_type", "Private Sector")
+            base_multiplier = 0.20 if employment_type == "Government Sector" else 0.15
+            
+            multiplier = base_multiplier if price_change < 5 else (base_multiplier + 0.10)
             rec_amount = round(surplus * multiplier, 2)
 
         action = "HOLD"
-        emoji = "⚖️"
         if price_change > 2.0 and sentiment == "Bullish":
             action = "BUY"
-            emoji = "📈"
         elif price_change < -2.0 and (sentiment == "Bearish" or price_change < -5.0):
             action = "SELL"
-            emoji = "📉"
             
         summary = f"The AI model predicts a {abs(price_change):.1f}% {'climb' if price_change > 0 else 'drop'} over the next 30 days. This suggests a {action} position is optimal."
 
@@ -174,7 +186,6 @@ async def predict_stock_price(symbol: str, days: int = 30, current_user: User = 
             "market_sentiment": sentiment,
             "recommendation": {
                 "action": action,
-                "emoji": emoji,
                 "summary": summary,
                 "predicted_change_pct": round(price_change, 2),
                 "personalized_amount": rec_amount,
