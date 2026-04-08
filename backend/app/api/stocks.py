@@ -80,6 +80,11 @@ async def predict_stock_price(symbol: str, days: int = 30, current_user: User = 
 
         # 4. Prepare Data for LSTM
         data = hist.filter(['Close'])
+        data = data.ffill().bfill().dropna() # Safety check for NaN values
+        
+        if len(data) < 60:
+             raise HTTPException(status_code=400, detail="Not enough valid historical data after cleaning.")
+
         dataset = data.values
         scaler = MinMaxScaler(feature_range=(0,1))
         scaled_data = scaler.fit_transform(dataset)
@@ -115,8 +120,14 @@ async def predict_stock_price(symbol: str, days: int = 30, current_user: User = 
         
         for _ in range(30): # Hardcode to 30 for consistency
             pred = model.predict(curr_input, verbose=0)
-            preds_scaled.append(pred[0, 0])
-            new_input = np.append(curr_input[0, 1:, 0], pred)
+            # Clip or handle NaN if model explodes
+            single_pred = pred[0, 0]
+            if np.isnan(single_pred) or np.isinf(single_pred):
+                # Fallback to last known value with slight drift
+                single_pred = curr_input[0, -1, 0] * 1.001 
+                
+            preds_scaled.append(single_pred)
+            new_input = np.append(curr_input[0, 1:, 0], [[single_pred]])
             curr_input = np.reshape(new_input, (1, 60, 1))
 
         predictions = scaler.inverse_transform(np.array(preds_scaled).reshape(-1, 1))
@@ -126,29 +137,36 @@ async def predict_stock_price(symbol: str, days: int = 30, current_user: User = 
         hist['SMA_50'] = hist['Close'].rolling(window=50).mean()
 
         last_date = hist.index.max()
+        
+        # Get last valid current price
+        current_price_raw = hist.iloc[-1]['Close']
+        if np.isnan(current_price_raw) or np.isinf(current_price_raw):
+            current_price_raw = data.iloc[-1]['Close'] # Fallback to cleaned data
+        current_price = float(current_price_raw)
+
         formatted_predictions = []
         for i, price in enumerate(predictions):
+            price_val = float(price[0])
+            if np.isnan(price_val) or np.isinf(price_val): price_val = current_price
+            
             next_date = last_date + timedelta(days=i+1)
             formatted_predictions.append({
                 "date": next_date.strftime("%Y-%m-%d"),
-                "predicted_price": float(price[0])
+                "predicted_price": price_val
             })
 
         # 8. Recommendation & Personalized Insight
         last_predicted = float(predictions[-1][0])
-        current_price = float(hist.iloc[-1]['Close'])
-        price_change = ((last_predicted - current_price) / current_price) * 100
+        if np.isnan(last_predicted) or np.isinf(last_predicted): last_predicted = current_price
         
-        # Personalized Platform Logic
+        price_change = ((last_predicted - current_price) / current_price) * 100 if current_price > 0 else 0
+        if np.isnan(price_change) or np.isinf(price_change): price_change = 0
+        
+        # Personalized Platform Logic (Removed Sri Lanka specific assets)
         best_platform = "Interactive Brokers (Global)"
         country = getattr(current_user, "country", "United States")
         
-        if country == "Sri Lanka":
-            if symbol.endswith(".N0000") or ".JKH" in symbol or ".COMB" in symbol:
-                best_platform = "Softlogic Invest (CSE)"
-            else:
-                best_platform = "Vanguard International"
-        elif country == "India":
+        if country == "India":
             best_platform = "Zerodha / Groww"
         elif country == "United Kingdom":
             best_platform = "Hargreaves Lansdown / Vanguard UK"
@@ -161,14 +179,11 @@ async def predict_stock_price(symbol: str, days: int = 30, current_user: User = 
         else:
             best_platform = "Vanguard / Fidelity"
 
-        # Amount Calculation (15-25% of surplus based on confidence)
+        # Amount Calculation
         rec_amount = 0
         if price_change > 0 and surplus > 0:
-            # If user has a guaranteed safety net (Government Pension), 
-            # we can be slightly more aggressive with the liquid surplus.
             employment_type = getattr(current_user, "employment_type", "Private Sector")
             base_multiplier = 0.20 if employment_type == "Government Sector" else 0.15
-            
             multiplier = base_multiplier if price_change < 5 else (base_multiplier + 0.10)
             rec_amount = round(surplus * multiplier, 2)
 
@@ -192,8 +207,8 @@ async def predict_stock_price(symbol: str, days: int = 30, current_user: User = 
                 "best_platform": best_platform
             },
             "indicators": {
-                "SMA_20": float(hist['SMA_20'].iloc[-1]) if not pd.isna(hist['SMA_20'].iloc[-1]) else 0,
-                "SMA_50": float(hist['SMA_50'].iloc[-1]) if not pd.isna(hist['SMA_50'].iloc[-1]) else 0,
+                "SMA_20": float(hist['SMA_20'].iloc[-1]) if np.isfinite(hist['SMA_20'].iloc[-1]) else current_price,
+                "SMA_50": float(hist['SMA_50'].iloc[-1]) if np.isfinite(hist['SMA_50'].iloc[-1]) else current_price,
             },
             "prediction": formatted_predictions,
             "model": "LSTM (Long Short-Term Memory)"
