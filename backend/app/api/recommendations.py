@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from app.api.auth import get_current_user
 from app.models.user import User
 from app.db.mongodb import get_database
+from app.utils.config import COUNTRY_CONFIG
 
 router = APIRouter()
 
@@ -51,26 +52,21 @@ async def perform_analysis(assessment: RiskAssessment, current_user: User, db):
         monthly_savings = monthly_income - monthly_expenses
         current_savings = latest_finance.get("total_savings", 0)
         
-        # --- 2.1 Localized Savings Factor (Sri Lanka EPF/ETF) ---
+        # --- 2.1 Universal Localized Savings Factor ---
         country = getattr(current_user, "country", "United States")
         employment_type = getattr(current_user, "employment_type", "Private Sector")
         
         hidden_savings = 0
-        is_lkr_localized = (country == "Sri Lanka" and employment_type == "Private Sector")
+        primary_salary = sum(item.get("amount", 0) for item in latest_finance.get("incomes", []) 
+                           if "salary" in item.get("name", "").lower() or "primary" in item.get("name", "").lower())
         
-        if is_lkr_localized:
-            # Assume income sources include a "Salary" component
-            # If user enters Net Salary (after 8% employee EPF), 
-            # the employer's 15% (12% EPF + 3% ETF) is approx 16.3% of the Net.
-            primary_salary = 0
-            for inc in latest_finance.get("incomes", []):
-                name = inc.get("name", "").lower()
-                if "salary" in name or "primary" in name:
-                    primary_salary += inc.get("amount", 0)
-            
-            if primary_salary > 0:
-                hidden_savings = primary_salary * 0.163
-                print(f"Applying Sri Lanka EPF/ETF Factor: +{hidden_savings} LKR/mo")
+        config = COUNTRY_CONFIG.get(country, COUNTRY_CONFIG["United States"])
+        multiplier = config.get(employment_type, config.get("default", 0))
+        
+        if primary_salary > 0:
+            hidden_savings = primary_salary * multiplier
+            if hidden_savings > 0:
+                print(f"Applying {country} Local Factor ({multiplier}): +{hidden_savings} /mo")
 
         total_monthly_savings = monthly_savings + hidden_savings
         
