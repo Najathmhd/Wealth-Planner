@@ -24,9 +24,14 @@ async def register(user: UserCreate):
         )
     
     # Hash password and store
+    from datetime import datetime
+    
     hashed_password = security.get_password_hash(user.password)
     user_in_db = user.model_dump()
     user_in_db["hashed_password"] = hashed_password
+    user_in_db["created_at"] = datetime.utcnow().isoformat()
+    # PIVOT: Enforce Sri Lanka Localization
+    user_in_db["country"] = "Sri Lanka"
     del user_in_db["password"]
     
     new_user = await db.users.insert_one(user_in_db)
@@ -53,6 +58,14 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     access_token = security.create_access_token(
         data={"sub": user_dict["email"]}, expires_delta=access_token_expires
     )
+    
+    # Track last login
+    from datetime import datetime
+    await db.users.update_one(
+        {"email": form_data.username},
+        {"$set": {"last_login": datetime.utcnow().isoformat() + "Z"}}
+    )
+    
     return {"access_token": access_token, "token_type": "bearer"}
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
@@ -74,11 +87,23 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     if user is None:
         raise credentials_exception
         
+    if user.get("is_active") is False:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account has been suspended. Please contact support."
+        )
+        
     # Convert _id to string or map to User model logic as needed. 
     # For now, we return Pydantic model User
     return User(**user)
 @router.get("/me", response_model=User)
 async def get_current_user_details(current_user: User = Depends(get_current_user)):
+    db = await get_database()
+    from datetime import datetime
+    await db.users.update_one(
+        {"email": current_user.email},
+        {"$set": {"last_login": datetime.utcnow().isoformat() + "Z"}}
+    )
     return current_user
 
 @router.put("/me", response_model=User)
@@ -89,7 +114,7 @@ async def update_user_details(
     db = await get_database()
     
     # Filter allowed updates
-    allowed_fields = ["full_name", "country", "employment_type"]
+    allowed_fields = ["full_name", "employment_type"]
     safe_updates = {k: v for k, v in updates.items() if k in allowed_fields}
 
     
