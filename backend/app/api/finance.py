@@ -1,38 +1,37 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
 from app.db.mongodb import get_database
-from app.models.finance import UserFinance, IncomeSource, ExpenseItem, SavingsGoal
+from app.models.finance import UserFinance, IncomeSource, ExpenseItem, SavingsGoal, FinanceSaveRequest
 from app.api.auth import get_current_user
 from app.models.user import User
 from app.utils.config import COUNTRY_CONFIG
+from datetime import datetime
 
 router = APIRouter()
 
 @router.post("/save")
 async def save_finance_data(
-    incomes: list[IncomeSource] = Body(...),
-    expenses: list[ExpenseItem] = Body(...),
-    savings_goals: list[SavingsGoal] = Body(...),
+    data: FinanceSaveRequest,
     current_user: User = Depends(get_current_user)
 ):
     db = await get_database()
     user_id = str(current_user.id) if current_user.id else current_user.email
     finance_collection = db.get_collection("finance")
     
-    print(f"Saving finance data for user: {user_id}")
+    # Use provided date or fallback to current local date
+    current_date = data.date or datetime.now().strftime("%Y-%m-%d")
+    
+    print(f"Saving finance data for user: {user_id} on {current_date}")
     
     # Calculate totals
-    total_income = sum(item.amount for item in incomes)
-    total_expenses = sum(item.amount for item in expenses)
+    total_income = sum(item.amount for item in data.incomes)
+    total_expenses = sum(item.amount for item in data.expenses)
     
-    from datetime import datetime
-    current_date = datetime.now().strftime("%Y-%m-%d")
-
     finance_doc = {
         "user_id": user_id,
         "date": current_date,
-        "incomes": [i.model_dump() for i in incomes],
-        "expenses": [e.model_dump() for e in expenses],
-        "savings_goals": [s.model_dump() for s in savings_goals],
+        "incomes": [i.model_dump() for i in data.incomes],
+        "expenses": [e.model_dump() for e in data.expenses],
+        "savings_goals": [s.model_dump() for s in data.savings_goals],
         "monthly_income": total_income,
         "monthly_expenses": total_expenses,
         "total_savings": total_income - total_expenses
@@ -82,26 +81,41 @@ async def get_finance_summary(currency: str = "USD", current_user: User = Depend
     # Calculate Universal Localized Hidden Wealth
     country = getattr(current_user, "country", "United States")
     employment_type = getattr(current_user, "employment_type", "Private Sector")
+
+    # Safely get config with global fallback
+    country_cfg = COUNTRY_CONFIG.get(country, COUNTRY_CONFIG.get("United States", {}))
+    multiplier = country_cfg.get(employment_type, country_cfg.get("default", 0))
     
     hidden_wealth = 0
-    primary_salary = sum(item.get("amount", 0) for item in finance_data.get("incomes", []) 
+    incomes = finance_data.get("incomes", [])
+    primary_salary = sum(item.get("amount", 0) for item in incomes 
                        if "salary" in item.get("name", "").lower() or "primary" in item.get("name", "").lower())
-    
-    config = COUNTRY_CONFIG.get(country, COUNTRY_CONFIG["United States"])
-    multiplier = config.get(employment_type, config.get("default", 0))
     
     if primary_salary > 0:
         hidden_wealth = primary_salary * multiplier
 
-    # High-level Health Score for Dashboard (Simplified from Recommendations)
-    monthly_income = float(finance_data.get("monthly_income", 0.0))
-    monthly_expenses = float(finance_data.get("monthly_expenses", 0.0))
+    # Monthly Totals (Fallback to calculation if fields missing from doc)
+    monthly_income = float(finance_data.get("monthly_income") or sum(item.get("amount", 0) for item in incomes))
+    monthly_expenses = float(finance_data.get("monthly_expenses") or sum(item.get("amount", 0) for item in finance_data.get("expenses", [])))
+    
     monthly_savings = monthly_income - monthly_expenses + hidden_wealth
     
+    # Health Score Calculation
     savings_rate = (monthly_savings / monthly_income) if monthly_income > 0 else 0
     health_score = min(100, max(10, int(savings_rate * 250)))
     if monthly_expenses > (monthly_income * 0.7): health_score -= 15
     health_score = min(100, max(0, health_score))
+
+    # Sector-Specific Terminology for Automated Savings
+    label = "Automated Savings"
+    if "government" in employment_type.lower():
+        label = "Pension Savings"
+    elif "private" in employment_type.lower():
+        label = "EPF/ETF Savings"
+    elif "business" in employment_type.lower() or "freelancer" in employment_type.lower():
+        label = "Self-Managed Savings"
+    elif multiplier == 0:
+        label = "No Automated Savings"
 
     return {
         "total_savings": float(finance_data.get("total_savings", 0.0)) * rate,
@@ -109,6 +123,7 @@ async def get_finance_summary(currency: str = "USD", current_user: User = Depend
         "monthly_expenses": monthly_expenses * rate,
         "investment_roi": 12.5,
         "hidden_wealth": round(hidden_wealth * rate, 2),
+        "hidden_wealth_label": label,
         "health_score": health_score,
         "currency": currency
     }
@@ -142,12 +157,14 @@ async def get_finance_history(currency: str = "USD", current_user: User = Depend
     return [
         {
             "date": record.get("date"),
-            "total_savings": float(record.get("total_savings", 0)) * rate,
+            "total_savings": float(record.get("total_savings") or (float(record.get("monthly_income", 0)) - float(record.get("monthly_expenses", 0)))) * rate,
             "income": float(record.get("monthly_income", 0)) * rate,
             "expenses": float(record.get("monthly_expenses", 0)) * rate,
-            "hidden_wealth": round((sum(item.get("amount", 0) for item in record.get("incomes", []) 
-                                     if "salary" in item.get("name", "").lower() or "primary" in item.get("name", "").lower()) * 
-                                     COUNTRY_CONFIG.get(country, COUNTRY_CONFIG["United States"]).get(employment_type, COUNTRY_CONFIG.get(country, COUNTRY_CONFIG["United States"]).get("default", 0)) * rate), 2),
+            "hidden_wealth": round(
+                sum(i.get("amount", 0) for i in record.get("incomes", []) if "salary" in i.get("name", "").lower() or "primary" in i.get("name", "").lower()) * 
+                COUNTRY_CONFIG.get(country, COUNTRY_CONFIG.get("United States", {})).get(employment_type, COUNTRY_CONFIG.get(country, COUNTRY_CONFIG.get("United States", {})).get("default", 0)) * rate, 
+                2
+            ),
             "currency": currency
         } for record in history
     ]
