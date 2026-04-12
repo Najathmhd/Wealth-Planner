@@ -42,6 +42,9 @@ class UserBase(BaseModel):
     role: str = "user"
     country: Optional[str] = "United States"
     employment_type: Optional[str] = "Private Sector"
+    created_at: Optional[str] = None
+    is_active: bool = True
+    last_login: Optional[str] = None
 
 class UserCreate(UserBase):
     password: str
