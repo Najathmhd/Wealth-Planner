@@ -48,7 +48,14 @@ export default function LoginPage() {
 
             const { access_token } = response.data
             setAuthToken(access_token)
-            router.push("/dashboard")
+            
+            // Check user role for admin routing
+            const userRes = await api.get("/auth/me")
+            if (userRes.data?.role === "admin" || userRes.data?.email === "najamhd037@gmail.com") {
+                router.push("/admin/dashboard")
+            } else {
+                router.push("/dashboard")
+            }
         } catch (err: any) {
             console.error("Login error:", err)
             setError(err.response?.data?.detail || "Invalid credentials. Please try again.")
