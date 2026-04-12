@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { motion } from "framer-motion"
 import { BarChart3, Activity, PieChart, Target, Shield, Zap, TrendingUp, Loader2 } from "lucide-react"
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell, PieChart as RePieChart, Pie } from "recharts"
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, Cell, PieChart as RePieChart, Pie } from "recharts"
 import api from "@/lib/api"
 import { useFinance } from "@/context/FinanceContext"
 import { Button } from "@/components/ui/button"
@@ -14,7 +14,7 @@ import Link from "next/link"
 
 export default function AnalyticsPage() {
     const router = useRouter()
-    const { history, latest, loading: contextLoading, currencySymbol } = useFinance()
+    const { summary, history, latest, loading: contextLoading, currencySymbol } = useFinance()
     const [riskProfile, setRiskProfile] = useState<any>(null)
     const [profileLoading, setProfileLoading] = useState(true)
 
@@ -85,7 +85,16 @@ export default function AnalyticsPage() {
         }))
     }
 
+        }))
+    }
 
+    const currentAppetite = riskProfile?.risk_appetite || "Unknown"
+    const riskScoreMap: Record<string, number> = {
+        "Conservative": 30,
+        "Moderate": 60,
+        "Aggressive": 90
+    }
+    const scoreVal = riskScoreMap[currentAppetite] || 0
 
     return (
         <motion.div
@@ -100,8 +109,8 @@ export default function AnalyticsPage() {
                         <Activity className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                        <h2 className="text-3xl font-bold tracking-tight text-white glow-text">Wealth Intelligence</h2>
-                        <p className="text-sm text-muted-foreground">Deep analysis of your financial DNA and trajectory.</p>
+                        <h2 className="text-3xl font-bold tracking-tight text-white glow-text">Your Money Trends</h2>
+                        <p className="text-sm text-muted-foreground">Easy tracking of how your savings are doing.</p>
                     </div>
                 </div>
                 <div className="hidden md:flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full border border-white/10">
@@ -118,9 +127,9 @@ export default function AnalyticsPage() {
                             <CardHeader>
                                 <CardTitle className="text-white flex items-center gap-2">
                                     <TrendingUp className="h-5 w-5 text-primary" />
-                                    Wealth Growth Mix
+                                    How Your Money Grows
                                 </CardTitle>
-                                <CardDescription>Tracking income, expenses, and automated wealth builders (EPF/ETF).</CardDescription>
+                                <CardDescription>See your income, spending, and future savings together.</CardDescription>
                             </CardHeader>
                             <CardContent className="h-[300px] pt-4">
                                 <ResponsiveContainer width="100%" height="100%">
@@ -136,9 +145,10 @@ export default function AnalyticsPage() {
                                             cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                                             formatter={(value: any) => [`${currencySymbol}${value.toLocaleString()}`, '']}
                                         />
-                                        <Bar dataKey="income" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="Income" />
-                                        <Bar dataKey="expenses" fill="#f59e0b" radius={[4, 4, 0, 0]} name="Expenses" />
-                                        <Bar dataKey="hidden" fill="#10b981" radius={[4, 4, 0, 0]} name="EPF/ETF Factor" />
+                                        <Legend verticalAlign="top" height={36} iconType="circle" />
+                                        <Bar dataKey="income" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="Income Stream" />
+                                        <Bar dataKey="expenses" fill="#f59e0b" radius={[4, 4, 0, 0]} name="Monthly Expenses" />
+                                        <Bar dataKey="hidden" fill="#10b981" radius={[4, 4, 0, 0]} name={summary?.hidden_wealth_label || "Automated Savings"} />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </CardContent>
@@ -148,10 +158,10 @@ export default function AnalyticsPage() {
                         <Card className="glass-card border-white/10 bg-white/5 lg:col-span-3">
                             <CardHeader>
                                 <CardTitle className="text-white flex items-center gap-2">
-                                    <PieChart className="h-5 w-5 text-secondary" />
-                                    Spending DNA
+                                    <PieChart className="h-5 w-5 text-orange-400" />
+                                    Where Your Money Goes
                                 </CardTitle>
-                                <CardDescription>Top spending categories from your latest input.</CardDescription>
+                                <CardDescription>Easy breakdown of your monthly spending categories.</CardDescription>
                             </CardHeader>
                             <CardContent className="h-[300px] flex flex-col items-center">
                                 <ResponsiveContainer width="100%" height="80%">
@@ -193,23 +203,26 @@ export default function AnalyticsPage() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="flex justify-between items-center text-sm">
-                                    <span className="text-white/60">Risk Score</span>
-                                    <span className="text-white font-bold">{riskProfile?.risk_appetite || "N/A"}/10</span>
+                                    <span className="text-white/60">Risk Designation</span>
+                                    <span className="text-white font-bold capitalize">{currentAppetite}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-sm">
-                                    <span className="text-white/60">Horizon</span>
+                                    <span className="text-white/60">Investment Horizon</span>
                                     <span className="text-white font-bold">{riskProfile?.time_horizon || "N/A"} Years</span>
                                 </div>
                                 <div className="h-2 w-full bg-white/10 rounded-full">
                                     <motion.div
-                                        className="h-full bg-indigo-500 rounded-full"
+                                        className={`h-full rounded-full ${currentAppetite === 'Conservative' ? 'bg-blue-500' : currentAppetite === 'Moderate' ? 'bg-indigo-500' : 'bg-rose-500'}`}
                                         initial={{ width: 0 }}
-                                        animate={{ width: `${(riskProfile?.risk_appetite || 0) * 10}%` }}
+                                        animate={{ width: `${scoreVal}%` }}
                                         transition={{ duration: 1 }}
                                     />
                                 </div>
-                                <p className="text-xs text-muted-foreground italic">
-                                    "{riskProfile?.investment_goal === 'retirement' ? 'Your focus is on long-term security.' : 'You are aiming for active wealth growth.'}"
+                                <p className="text-xs text-muted-foreground italic h-8">
+                                    {currentAppetite === 'Conservative' && "Your focus is on long-term capital preservation and absolute security."}
+                                    {currentAppetite === 'Moderate' && "You balance calculated risks with steady, systemic wealth compounding."}
+                                    {currentAppetite === 'Aggressive' && "You are actively prioritizing maximum capital growth and market exposure."}
+                                    {currentAppetite === 'Unknown' && "Configure your Risk DNA to unlock tailored AI insights."}
                                 </p>
                             </CardContent>
                         </Card>
