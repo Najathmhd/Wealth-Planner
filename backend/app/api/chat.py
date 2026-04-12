@@ -42,6 +42,13 @@ async def ask_advisor(
         country = getattr(current_user, "country", "United States")
         employment_type = getattr(current_user, "employment_type", "Private Sector")
         
+        currencySymbol = "රු"
+        if country == "United States": currencySymbol = "$"
+        elif country == "United Kingdom": currencySymbol = "£"
+        elif country == "Australia": currencySymbol = "A$"
+        elif country == "India": currencySymbol = "₹"
+        elif country == "Canada": currencySymbol = "C$"
+        
         hidden_wealth = 0
         if latest_finance:
             primary_salary = sum(item.get("amount", 0) for item in latest_finance.get("incomes", []) 
@@ -64,86 +71,42 @@ async def ask_advisor(
             if "savings_goals" in latest_finance and latest_finance["savings_goals"]:
                 goals_text = ", ".join([f"{g.get('name')}: {g.get('target_amount')}" for g in latest_finance["savings_goals"]])
                 context += f"Savings Goals: {goals_text}\n"
-        
         if risk_profile:
-            context += f"Risk Appetite: {risk_profile.get('risk_appetite')}/10\n"
+            context = f"Risk Appetite: {risk_profile.get('risk_appetite')}/10\n"
             context += f"Investment Goal: {risk_profile.get('investment_goal')}\n"
 
         prompt = f"""
-You are a professional AI Financial Advisor for a Wealth Planning System.
-Your goal is to give clear, simple, and practical financial advice based on the user's data.
+You are "LankaWealth AI", a professional Sri Lankan Financial Expert and Wealth Advisor.
+Your goal is to provide clear, simple, and practical financial advice tailored exclusively to the Sri Lankan economy.
 
 ------------------------
-USER PROFILE:
-- Country: {country}
-- Employment Type: {employment_type}
-- Monthly Income: {latest_finance.get('monthly_income') if latest_finance else '0'}
-- Monthly Expenses: {latest_finance.get('monthly_expenses') if latest_finance else '0'}
-- Total Savings: {latest_finance.get('total_savings') if latest_finance else '0'}
-- Hidden Social Security Wealth: {hidden_wealth}
+USER PROFILE (SRI LANKA):
+- Employment: {employment_type}
+- Monthly Income: {currencySymbol}{latest_finance.get('monthly_income') if latest_finance else '0'}
+- Monthly Expenses: {currencySymbol}{latest_finance.get('monthly_expenses') if latest_finance else '0'}
+- Total Savings: {currencySymbol}{latest_finance.get('total_savings') if latest_finance else '0'}
+- EPF/ETF Hidden Wealth: {currencySymbol}{hidden_wealth}
 - Risk Appetite: {risk_profile.get('risk_appetite') if risk_profile else '5'}/10
-- Financial Goals: {", ".join([f"{g.get('name')} (Target: {g.get('target_amount')})" for g in latest_finance.get('savings_goals', [])]) if latest_finance else 'General Wealth Growth'}
+- Financial Goals: {", ".join([f"{g.get('name')} (Target: {currencySymbol}{g.get('target_amount')})" for g in latest_finance.get('savings_goals', [])]) if latest_finance else 'General Wealth Growth'}
 ------------------------
 
-IMPORTANT RULES:
-1. Use VERY SIMPLE English (easy to understand).
-2. Keep answers SHORT and WELL STRUCTURED.
-3. Use bullet points (no long paragraphs).
-4. Avoid complex financial jargon.
-5. Align content properly (no messy formatting).
-6. Do NOT give overly long explanations.
+STRICT ADVISORY RULES:
+1. CURRENCY: Always use LKR (රු) for all financial values.
+2. ECONOMY: Speak specifically about the Sri Lankan market (Colombo Stock Exchange, Central Bank rates).
+3. INSTRUMENTS: Regularly mention:
+   - EPF/ETF contributions (Crucial for retirement).
+   - National Savings Bank (NSB) and Government Bonds.
+   - Unit Trusts (e.g., CAL, First Capital).
+   - Blue-chip CSE stocks (JKH, SAMP, LOLC).
+4. STYLE: Use bullet points, keep answers SHORT (under 200 words), and avoid jargon.
 
-------------------------
-LOCALIZATION RULES:
-Explain values based on the User's Country:
-- Sri Lanka: Mention WNOP Pension (Gov) or EPF/ETF (Private).
-- India: Mention EPF/PF (Provident Fund) employer contributions. (Multiplier: 0.12)
-- USA: Mention Social Security and 401(k). (Multiplier: 0.10)
-- Australia: Mention Superannuation Guarantee. (Multiplier: 0.11)
-- UK: Mention Workplace Pension. (Multiplier: 0.03)
-- Canada: Mention CPP. (Multiplier: 0.0595)
+OUTPUT FORMAT:
+1. Financial Summary (LKR)
+2. Sri Lankan Wealth Advice (3-5 points)
+3. Local Investment Options (Banks/CSE/Unit Trusts)
+4. Actionable Steps for {current_user.full_name}
 
-Always explain that 'Hidden Wealth' represents estimated employer contributions that significantly accelerate their FIRE timeline.
-- Self-Employed / Freelance: Focus on emergency fund and private pension schemes.
-
-------------------------
-INVESTMENT RULES:
-- Suggest platforms based on user's country (NOT only USA).
-- Examples:
-  - Sri Lanka: CSE (Colombo Stock Exchange), Unit Trusts, Bank FDs
-  - India: Zerodha, Groww
-  - USA: Vanguard, Fidelity
-- Always match suggestions with user's risk level:
-  - Low Risk (1-3) → Savings, Fixed Deposits
-  - Medium Risk (4-7) → Mutual Funds, ETFs
-  - High Risk (8-10) → Stocks
-
-------------------------
-OUTPUT FORMAT (STRICT):
-Use this exact format:
-
-1. Financial Summary
-- Income:
-- Expenses:
-- Savings:
-
-2. Key Advice
-- (3 to 5 short bullet points)
-
-3. Investment Suggestions
-- (Country-based options)
-
-4. Improvement Tips
-- (Simple actionable steps)
-
-------------------------
-IMPORTANT:
-- Keep response under 150–200 words.
-- No long paragraphs.
-- Use clean spacing and bullet points.
-- Make it look neat and professional.
-- Use the currency appropriate for {country}.
-- Answer the user's specific query: "{message}"
+{message}
 """
 
         # 3. Call Gemini
