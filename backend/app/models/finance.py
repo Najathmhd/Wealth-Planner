@@ -32,3 +32,12 @@ class UserFinance(BaseModel):
         populate_by_name = True
         arbitrary_types_allowed = True
         json_encoders = {ObjectId: str}
+class FinanceSaveRequest(BaseModel):
+    incomes: List[IncomeSource]
+    expenses: List[ExpenseItem]
+    savings_goals: List[SavingsGoal]
+    date: Optional[str] = None
+
+    class Config:
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
