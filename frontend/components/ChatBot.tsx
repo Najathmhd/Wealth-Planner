@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { MessageSquare, x, Send, Loader2, Bot, User, Minimize2, Maximize2, X } from "lucide-react"
+import { MessageSquare, X, Send, Loader2, Bot, User, Minimize2, Maximize2 } from "lucide-react"
 import api from "@/lib/api"
 import { Button } from "@/components/ui/button"
 
