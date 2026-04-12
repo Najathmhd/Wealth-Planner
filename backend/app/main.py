@@ -16,11 +16,12 @@ app.add_middleware(
 async def root():
     return {"message": "Welcome to the AI-Powered Wealth Planner API"}
 
-from app.api import auth, finance, stocks, recommendations, chat
+from app.api import auth, finance, stocks, recommendations, chat, admin
 
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(finance.router, prefix="/api/finance", tags=["finance"])
 app.include_router(stocks.router, prefix="/api/stocks", tags=["stocks"])
 app.include_router(recommendations.router, prefix="/api/recommendations", tags=["recommendations"])
 app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
+app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 
