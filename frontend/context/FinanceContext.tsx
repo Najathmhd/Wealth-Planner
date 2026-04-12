@@ -10,6 +10,7 @@ interface FinanceSummary {
     monthly_expenses: number
     investment_roi: number
     hidden_wealth?: number 
+    hidden_wealth_label?: string
     health_score?: number
 }
 
