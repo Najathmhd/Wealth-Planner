@@ -21,12 +21,14 @@ interface Financials {
     total_savings: number;
     monthly_income: number;
     monthly_expenses: number;
+    hidden_wealth: number;
 }
 
 interface RiskProfile {
-    age?: number;
+    age?: any;
     investment_goal?: string;
-    risk_appetite?: number;
+    risk_appetite?: any;
+    risk_category?: string;
 }
 
 interface UserData {
@@ -235,7 +237,7 @@ export default function AdminDashboardPage() {
 
     // Aggregations
     const totalUsers = filteredUsers.length
-    const totalSavings = filteredUsers.reduce((acc, u) => acc + (u.financials?.total_savings || 0), 0)
+    const totalSavings = filteredUsers.reduce((acc, u) => acc + (u.financials?.total_savings || 0) + (u.financials?.hidden_wealth || 0), 0)
     const avgIncome = totalUsers > 0 ? filteredUsers.reduce((acc, u) => acc + (u.financials?.monthly_income || 0), 0) / totalUsers : 0
 
     const empDistributionMap: Record<string, number> = {}
@@ -461,8 +463,8 @@ export default function AdminDashboardPage() {
                                             </td>
                                             <td className="px-6 py-4 items-start">
                                                 <div className="text-sm text-slate-300 flex items-center mb-1">
-                                                    <Briefcase className="h-3 w-3 mr-1" />
-                                                    {user.employment_type}
+                                                    <Brain className="h-3 w-3 mr-1 text-primary" />
+                                                    {user.risk_profile?.risk_category || "N/A"}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-right font-medium text-emerald-400">
@@ -713,13 +715,38 @@ export default function AdminDashboardPage() {
                                         <span className="text-muted-foreground text-sm">Monthly Income</span>
                                         <span className="text-emerald-400 font-medium">LKR {selectedUser.financials?.monthly_income.toLocaleString()}</span>
                                     </div>
-                                    <div className="flex justify-between items-center py-2 border-b border-white/5">
+                                     <div className="flex justify-between items-center py-2 border-b border-white/5">
                                         <span className="text-muted-foreground text-sm">Monthly Expenses</span>
                                         <span className="text-orange-400 font-medium">LKR {selectedUser.financials?.monthly_expenses.toLocaleString()}</span>
                                     </div>
+                                    <div className="flex justify-between items-center py-2 border-b border-white/5">
+                                        <span className="text-muted-foreground text-sm flex items-center">
+                                            Hidden Wealth <Sparkles className="h-3 w-3 ml-1 text-emerald-400" />
+                                        </span>
+                                        <span className="text-emerald-400 font-medium">LKR {selectedUser.financials?.hidden_wealth.toLocaleString()}</span>
+                                    </div>
                                     <div className="flex justify-between items-center pt-2">
-                                        <span className="text-muted-foreground text-sm">Current Savings</span>
-                                        <span className="text-primary font-bold">LKR {selectedUser.financials?.total_savings.toLocaleString()}</span>
+                                        <span className="text-muted-foreground text-sm">Economic DNA Total</span>
+                                        <span className="text-primary font-bold">LKR {(selectedUser.financials?.total_savings + selectedUser.financials?.hidden_wealth).toLocaleString()}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Risk Intelligence */}
+                            <div className="opacity-80">
+                                <h3 className="text-white text-sm font-semibold flex items-center mb-3">
+                                    <Shield className="h-4 w-4 mr-2 text-indigo-400" />
+                                    Risk DNA Assessment
+                                </h3>
+                                <div className="bg-indigo-500/10 p-4 rounded-lg border border-indigo-500/20">
+                                    <div className="flex justify-between items-center mb-1">
+                                        <span className="text-xs text-indigo-300 uppercase font-bold tracking-wider">Designation</span>
+                                        <span className="text-white font-bold">{selectedUser.risk_profile?.risk_category || "UNASSESSED"}</span>
+                                    </div>
+                                    <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                        <div 
+                                            className={`h-full transition-all duration-1000 ${selectedUser.risk_profile?.risk_category === 'Conservative' ? 'bg-blue-500 w-[30%]' : selectedUser.risk_profile?.risk_category === 'Moderate' ? 'bg-indigo-500 w-[60%]' : selectedUser.risk_profile?.risk_category === 'Aggressive' ? 'bg-rose-500 w-[90%]' : 'w-0'}`} 
+                                        />
                                     </div>
                                 </div>
                             </div>
