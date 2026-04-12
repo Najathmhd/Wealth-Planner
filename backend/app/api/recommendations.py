@@ -17,23 +17,34 @@ async def perform_analysis(assessment: RiskAssessment, current_user: User, db):
     # Ensure we have a valid user ID (Consistency with finance.py)
     user_id_str = str(current_user.id) if current_user.id else current_user.email
     
-    # 1. Determine Risk Category
+    # 1. Determine local pension name first
+    employment_type = getattr(current_user, "employment_type", "Private Sector")
+    if employment_type == "Government":
+        local_pension = "Pensions Dept (W&OP)"
+    elif employment_type == "Business Owner":
+        local_pension = "EPF Voluntary"
+    elif employment_type == "Freelancer/Daily Wage":
+        local_pension = "High-Yield Savings"
+    else:
+        local_pension = "EPF / ETF (Statutory)"
+
+    # 2. Determine Risk Category
     risk_score = assessment.risk_appetite
     if assessment.time_horizon < 3:
         risk_score -= 2 # Lower risk for short term
     
     category = "Conservative"
-    allocation = {"Bonds": 70, "Cash": 20, "Stocks": 10}
-    returns = "3.2% - 4.8%"
+    allocation = {local_pension: 50, "LKR Treasury Bills": 30, "High-Yield FDs": 20}
+    returns = "8.2% - 10.8%"
     
     if risk_score > 7:
         category = "Aggressive"
-        allocation = {"Stocks": 80, "Crypto": 10, "Bonds": 10}
-        returns = "11.5% - 18.2%"
+        allocation = {"Equities (CSE/Global)": 60, "Digital Assets": 20, local_pension: 20}
+        returns = "18.5% - 24.2%"
     elif risk_score >= 4:
         category = "Moderate"
-        allocation = {"Stocks": 50, "Bonds": 40, "Real Estate": 10}
-        returns = "7.4% - 10.1%"
+        allocation = {"Unit Trusts": 50, local_pension: 30, "Blue Chip Stocks": 20}
+        returns = "12.4% - 15.1%"
 
     # 2. FIRE & Wealth Roadmap Integration
     finance_collection = db.get_collection("finance")
@@ -143,80 +154,32 @@ async def perform_analysis(assessment: RiskAssessment, current_user: User, db):
             "savings_rate": round(savings_rate * 100, 1),
             "health_score": health_score,
             "saver_category": saver_category,
-            "social_security_bonus": round(hidden_savings, 2) if hidden_savings > 0 else 0
+            "epf_etf_bonus": round(hidden_savings, 2) if hidden_savings > 0 else 0
         }
 
-    # 3. Dynamic Suggestions
+    # 3. Dynamic Suggestions (PIVOT: Sri Lanka Only)
     alternative_assets = []
     
-    country = getattr(current_user, "country", "United States")
-    employment_type = getattr(current_user, "employment_type", "Private Sector")
-    
-    local_pension = "401(k) / IRA"
-    
-    # 1. Define localized pensions
-    if employment_type == "Government":
-        local_pension = "Government Pension Scheme"
-    elif employment_type == "Business Owner":
-        local_pension = "Reinvesting in Business Growth"
-    elif employment_type == "Freelancer/Daily Wage":
-        local_pension = "High-Yield Fixed Deposits / Liquid Funds"
-    else:
-        # Private Sector / Default
-        if country == "Sri Lanka":
-            local_pension = "EPF / ETF (Provident Funds)"
-        elif country == "United Kingdom":
-            local_pension = "Workplace Pension / SIPP"
-        elif country == "Australia":
-            local_pension = "Superannuation Guarantee"
-        elif country == "India":
-            local_pension = "EPFO / PPF"
-        elif country == "Canada":
-            local_pension = "RRSP / TFSA"
-        else:
-            local_pension = "401(k) / IRA"
-            
-    # 2. Define platforms
-    if country == "Sri Lanka":
-        cons_plats = ["Local Top-Tier Banks", "Gov Securities"]
-        mod_plats = ["Local Stock Exchange (CSE)", "Unit Trusts"]
-        agg_plats = ["International Brokers", "Crypto Exchanges"]
-    elif country == "United Kingdom":
-        cons_plats = ["Premium Bonds", "High Street Banks"]
-        mod_plats = ["Hargreaves Lansdown", "Vanguard UK"]
-        agg_plats = ["Trading 212", "Coinbase UK"]
-    elif country == "Australia":
-        cons_plats = ["Term Deposits", "Government Bonds"]
-        mod_plats = ["CommSec", "Vanguard Australia"]
-        agg_plats = ["Interactive Brokers", "CoinSpot"]
-    elif country == "India":
-        cons_plats = ["Fixed Deposits (FD)", "Post Office Schemes"]
-        mod_plats = ["Zerodha", "Groww"]
-        agg_plats = ["WazirX", "Interactive Brokers India"]
-    elif country == "Canada":
-        cons_plats = ["GICs", "Big Five Banks"]
-        mod_plats = ["Wealthsimple", "Questrade"]
-        agg_plats = ["Interactive Brokers Canada", "Newton Crypto"]
-    else: # US DEFAULT
-        cons_plats = ["Vanguard", "Local Bank CD"]
-        mod_plats = ["Fidelity", "Robinhood"]
-        agg_plats = ["Coinbase (Crypto)", "Interactive Brokers"]
+    # Define platforms (Sri Lanka Focused)
+    cons_plats = ["National Savings Bank (NSB)", "BOC/Sampath Fixed Deposits"]
+    mod_plats = ["CAL Unit Trusts", "First Capital", "Colombo Stock Exchange (CSE)"]
+    agg_plats = ["International Brokerage (via CAL)", "Softlogic Stockbrokers"]
 
     if category == "Conservative":
-        alternative_assets = ["Physical Gold (Safety)", "Government Bonds", local_pension]
+        alternative_assets = ["Physical Gold (Safety)", "LKR Treasury Bills", local_pension]
         platforms = cons_plats
         sectors = ["Utilities", "Consumer Staples"]
-        examples = ["Fixed Deposits (FD)", "Index ETFs (e.g. VTI)", "Dividend Stocks (e.g. KO)"]
+        examples = ["Bank Fixed Deposits (FD)", "NSB Savings", "Dividend Stocks (e.g., JKH, DIAL)"]
     elif category == "Moderate":
-        alternative_assets = ["Gold ETFs", "Real Estate (REITs)", local_pension]
+        alternative_assets = ["Gold Coins", "Sri Lankan Unit Trusts", local_pension]
         platforms = mod_plats
-        sectors = ["Technology", "Healthcare"]
-        examples = ["Blue Chip Stocks (e.g. MSFT, AAPL)", "S&P 500 ETF (VOO)", "Local Unit Trusts"]
+        sectors = ["Banking", "Diversified Holdings"]
+        examples = ["Blue Chip Stocks (e.g., JKH, SAMP)", "Income Unit Trusts", "Treasury Bonds"]
     else: # Aggressive
-        alternative_assets = ["Digital Gold/Bitcoin", "Venture Capital Funds", local_pension]
+        alternative_assets = ["Digital Assets", "Equity Portfolios", local_pension]
         platforms = agg_plats
-        sectors = ["AI & Robotics", "Green Energy"]
-        examples = ["Growth Stocks (e.g. NVDA, TSLA)", "Crypto Assets (BTC/ETH)", "Small-Cap Innovation"]
+        sectors = ["Tech Innovation", "Manufacturing"]
+        examples = ["High-Growth Stocks (e.g., LOLC, HAYL)", "CSE Alpha Portfolios", "International ETFs"]
 
     return {
         "category": category,
@@ -229,7 +192,7 @@ async def perform_analysis(assessment: RiskAssessment, current_user: User, db):
         "platforms": platforms,
         "sectors": sectors,
         "examples": examples,
-        "advice": f"As a {category.lower()} investor, your roadmap prioritizes {sectors[0]} and {alternative_assets[0]} for optimal growth."
+        "advice": f"Following Sri Lankan market trends, as a {category.lower()} investor, your roadmap prioritizes {sectors[0]} and {alternative_assets[0]} for optimal local growth."
     }
 
 @router.post("/analyze")
