@@ -85,16 +85,13 @@ export default function AnalyticsPage() {
         }))
     }
 
-        }))
-    }
-
-    const currentAppetite = riskProfile?.risk_appetite || "Unknown"
+    const currentCategory = riskProfile?.risk_category || "Unknown"
     const riskScoreMap: Record<string, number> = {
         "Conservative": 30,
         "Moderate": 60,
         "Aggressive": 90
     }
-    const scoreVal = riskScoreMap[currentAppetite] || 0
+    const scoreVal = riskScoreMap[currentCategory] || 0
 
     return (
         <motion.div
@@ -204,7 +201,7 @@ export default function AnalyticsPage() {
                             <CardContent className="space-y-4">
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="text-white/60">Risk Designation</span>
-                                    <span className="text-white font-bold capitalize">{currentAppetite}</span>
+                                    <span className="text-white font-bold capitalize">{currentCategory}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="text-white/60">Investment Horizon</span>
@@ -212,17 +209,22 @@ export default function AnalyticsPage() {
                                 </div>
                                 <div className="h-2 w-full bg-white/10 rounded-full">
                                     <motion.div
-                                        className={`h-full rounded-full ${currentAppetite === 'Conservative' ? 'bg-blue-500' : currentAppetite === 'Moderate' ? 'bg-indigo-500' : 'bg-rose-500'}`}
+                                        className={`h-full rounded-full ${currentCategory === 'Conservative' ? 'bg-blue-500' : currentCategory === 'Moderate' ? 'bg-indigo-500' : 'bg-rose-500'}`}
                                         initial={{ width: 0 }}
                                         animate={{ width: `${scoreVal}%` }}
                                         transition={{ duration: 1 }}
                                     />
                                 </div>
+                                <div className="flex justify-between items-center text-[10px] text-white/40">
+                                    <span>Conservative</span>
+                                    <span>Moderate</span>
+                                    <span>Aggressive</span>
+                                </div>
                                 <p className="text-xs text-muted-foreground italic h-8">
-                                    {currentAppetite === 'Conservative' && "Your focus is on long-term capital preservation and absolute security."}
-                                    {currentAppetite === 'Moderate' && "You balance calculated risks with steady, systemic wealth compounding."}
-                                    {currentAppetite === 'Aggressive' && "You are actively prioritizing maximum capital growth and market exposure."}
-                                    {currentAppetite === 'Unknown' && "Configure your Risk DNA to unlock tailored AI insights."}
+                                    {currentCategory === 'Conservative' && "Your focus is on long-term capital preservation and absolute security."}
+                                    {currentCategory === 'Moderate' && "You balance calculated risks with steady, systemic wealth compounding."}
+                                    {currentCategory === 'Aggressive' && "You are actively prioritizing maximum capital growth and market exposure."}
+                                    {currentCategory === 'Unknown' && "Configure your Risk DNA to unlock tailored AI insights."}
                                 </p>
                             </CardContent>
                         </Card>
