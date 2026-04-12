@@ -1,34 +1,28 @@
-# Global Financial Configuration by Country
+# Specialized Sri Lankan Financial Configuration
+# Focused strictly on LKR, EPF, ETF and national interest rates
+
 COUNTRY_CONFIG = {
     "Sri Lanka": {
-        "Private Sector": 0.163, # 12% EPF + 3% ETF indexed to Net
-        "Government Sector": 0.075, # WNOP Security Factor
+        "Private Sector": 0.163, # 12% EPF + 3% ETF indexed + nominal social security
+        "Government": 0.08, # Pension contribution / W&OP factors
+        "Business Owner": 0.00,
+        "Freelancer/Daily Wage": 0.00,
+        "Student": 0.00,
         "currency": "LKR",
-        "symbol": "රු"
+        "symbol": "රු",
+        "default": 0.00
     },
     "United States": {
-        "default": 0.10, # SS (6.2%) + Estimated 401k match avg
+        "default": 0.0765, # Standard FICA
         "currency": "USD",
         "symbol": "$"
-    },
-    "India": {
-        "default": 0.12, # EPF Employer Share
-        "currency": "INR",
-        "symbol": "₹"
-    },
-    "Australia": {
-        "default": 0.11, # Superannuation Guarantee
-        "currency": "AUD",
-        "symbol": "A$"
-    },
-    "United Kingdom": {
-        "default": 0.03, # Workplace Pension Employer Min
-        "currency": "GBP",
-        "symbol": "£"
-    },
-    "Canada": {
-        "default": 0.0595, # CPP Employer Share
-        "currency": "CAD",
-        "symbol": "C$"
     }
+}
+
+# Regional Interest Rates for CSE and Banking
+LKR_INTEREST_RATES = {
+    "Fixed Deposit": 11.5,
+    "Treasury Bill": 10.2,
+    "Savings Account": 4.5,
+    "Unit Trust (Projected)": 14.5
 }
