@@ -37,7 +37,7 @@ export function StockForecast({ platforms = [] }: { platforms?: string[] }) {
     const [error, setError] = useState("")
 
     const handlePredict = async (overrideSymbol?: string) => {
-        const targetSymbol = typeof overrideSymbol === 'string' ? overrideSymbol : symbol;
+        const targetSymbol = (typeof overrideSymbol === 'string' ? overrideSymbol : symbol).trim();
         if (!targetSymbol) return
         setLoading(true)
         setError("")
@@ -58,18 +58,31 @@ export function StockForecast({ platforms = [] }: { platforms?: string[] }) {
         const lowerName = name.toLowerCase();
         if (lowerName.includes("stock") || lowerName.includes("cse") || lowerName.includes("exchange")) return <BarChart className="h-4 w-4" />;
         if (lowerName.includes("trust") || lowerName.includes("bank")) return <Building className="h-4 w-4" />;
-        if (lowerName.includes("crypto") || lowerName.includes("bitcoin")) return <Coins className="h-4 w-4" />;
-        return <Globe className="h-4 w-4" />;
+        if (lowerName.includes("crypto") || lowerName.includes("binance") || lowerName.includes("p2p")) return <Coins className="h-4 w-4" />;
+        return <ShieldCheck className="h-4 w-4" />;
+    }
+
+    const getPlatformLink = (name: string) => {
+        const lowerName = name.toLowerCase();
+        if (lowerName.includes("cal") || lowerName.includes("capital alliance")) return "https://cal.lk/";
+        if (lowerName.includes("softlogic")) return "https://softlogicstockbrokers.lk/";
+        if (lowerName.includes("binance")) return "https://www.binance.com/";
+        if (lowerName.includes("interactive brokers")) return "https://www.interactivebrokers.com/";
+        if (lowerName.includes("asia securities")) return "https://asiasecurities.lk/";
+        if (lowerName.includes("ndb")) return "https://www.ndbsecurities.com/";
+        return "https://www.cse.lk/"; // fallback
     };
 
     return (
         <Card className="border-white/10 bg-white/5 shadow-2xl overflow-hidden">
             <CardHeader className="bg-white/5 border-b border-white/10">
-                <CardTitle className="text-white flex items-center gap-2">
-                    <Zap className="h-5 w-5 text-primary" />
-                    Neural Market Forecast
+                <CardTitle className="text-xl font-bold flex items-center gap-2 text-white">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                    Stock Price Prediction (AI)
                 </CardTitle>
-                <CardDescription>Enter a ticker symbol to unleash LSTM deep learning models on historical market data.</CardDescription>
+                <CardDescription className="text-white/60">
+                    See where a stock price might go next using our AI helper.
+                </CardDescription>
                 <CardDescription>Prediction based on last 60 days of market data.</CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
@@ -86,33 +99,65 @@ export function StockForecast({ platforms = [] }: { platforms?: string[] }) {
                     </Button>
                 </div>
 
-                <div className="mb-10">
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-4">Trending Assets (Global & Local)</p>
-                    <div className="flex flex-wrap gap-2">
-                        {[
-                            { symbol: "AAPL", domain: "apple.com" },
-                            { symbol: "MSFT", domain: "microsoft.com" },
-                            { symbol: "GOOGL", domain: "google.com" },
-                            { symbol: "TSLA", domain: "tesla.com" },
-                            { symbol: "NVDA", domain: "nvidia.com" },
-                            { symbol: "AMZN", domain: "amazon.com" },
-                            { symbol: "BTC-USD", domain: "bitcoin.org" },
-                        ].map((asset) => (
-                            <Button
-                                key={asset.symbol}
-                                variant="outline"
-                                size="sm"
-                                disabled={loading}
-                                onClick={() => {
-                                    setSymbol(asset.symbol);
-                                    handlePredict(asset.symbol);
-                                }}
-                                className={`bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:border-white/20 transition-all font-bold tracking-wider flex items-center gap-2 px-3 py-6 rounded-2xl group min-w-[120px]`}
-                            >
-                                <AssetLogo symbol={asset.symbol} domain={asset.domain} />
-                                {asset.symbol.split('.')[0]}
-                            </Button>
-                        ))}
+                <div className="mb-10 space-y-6">
+                    <div>
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-3">Trending Local Assets (Sri Lanka)</p>
+                        <div className="flex flex-wrap gap-2">
+                            {[
+                                { symbol: "JKH.N0000", domain: "keells.com", name: "John Keells Holdings" },
+                                { symbol: "SAMP.N0000", domain: "sampath.lk", name: "Sampath Bank" },
+                                { symbol: "LOLC.N0000", domain: "lolc.com", name: "LOLC Holdings" },
+                                { symbol: "COMB.N0000", domain: "combank.lk", name: "Commercial Bank" },
+                                { symbol: "HAYL.N0000", domain: "hayleys.com", name: "Hayleys" },
+                            ].map((asset) => (
+                                <Button
+                                    key={asset.symbol}
+                                    title={asset.name}
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={loading}
+                                    onClick={() => {
+                                        setSymbol(asset.symbol);
+                                        handlePredict(asset.symbol);
+                                    }}
+                                    className={`bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:border-white/20 transition-all font-bold tracking-wider flex items-center gap-2 px-3 py-6 rounded-2xl group min-w-[120px]`}
+                                >
+                                    <AssetLogo symbol={asset.symbol} domain={asset.domain} />
+                                    {asset.symbol.split('.')[0]}
+                                </Button>
+                            ))}
+                        </div>
+                    </div>
+                    <div>
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-3">Trending Global Assets</p>
+                        <div className="flex flex-wrap gap-2">
+                            {[
+                                { symbol: "AAPL", domain: "apple.com", name: "Apple Inc." },
+                                { symbol: "NVDA", domain: "nvidia.com", name: "NVIDIA Corporation" },
+                                { symbol: "TSLA", domain: "tesla.com", name: "Tesla, Inc." },
+                                { symbol: "MSFT", domain: "microsoft.com", name: "Microsoft Corporation" },
+                                { symbol: "GOOGL", domain: "google.com", name: "Alphabet (Google)" },
+                                { symbol: "AMZN", domain: "amazon.com", name: "Amazon.com, Inc." },
+                                { symbol: "BTC-USD", domain: "bitcoin.org", name: "Bitcoin" },
+                                { symbol: "ETH-USD", domain: "ethereum.org", name: "Ethereum" },
+                            ].map((asset) => (
+                                <Button
+                                    key={asset.symbol}
+                                    title={asset.name}
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={loading}
+                                    onClick={() => {
+                                        setSymbol(asset.symbol);
+                                        handlePredict(asset.symbol);
+                                    }}
+                                    className={`bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:border-white/20 transition-all font-bold tracking-wider flex items-center gap-2 px-3 py-6 rounded-2xl group min-w-[120px]`}
+                                >
+                                    <AssetLogo symbol={asset.symbol} domain={asset.domain} />
+                                    {asset.symbol.split('.')[0]}
+                                </Button>
+                            ))}
+                        </div>
                     </div>
                 </div>
 
@@ -189,6 +234,7 @@ export function StockForecast({ platforms = [] }: { platforms?: string[] }) {
                                     platforms.map((platform, i) => (
                                         <div 
                                             key={i} 
+                                            onClick={() => window.open(getPlatformLink(platform), '_blank', 'noopener,noreferrer')}
                                             className={`flex items-center justify-between p-4 rounded-2xl bg-black/40 border group transition-all cursor-pointer relative ${
                                                 platform === data.recommendation?.best_platform ? 'border-primary/60 shadow-[0_0_20px_rgba(139,92,246,0.15)] bg-primary/5' : 'border-white/5 hover:border-primary/50'
                                             }`}
@@ -218,7 +264,7 @@ export function StockForecast({ platforms = [] }: { platforms?: string[] }) {
                                 <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:scale-125 transition-transform">
                                     <TrendingUp className="h-10 w-10" />
                                 </div>
-                                <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest mb-1">Current Price</p>
+                                <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">AI Prediction Confidence</div>
                                 <p className="text-2xl font-bold text-white">{currencySymbol}{data.current_price?.toFixed(2)}</p>
                             </div>
 
