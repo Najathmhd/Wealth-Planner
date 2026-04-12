@@ -17,7 +17,7 @@ export default function RegisterPage() {
         full_name: "",
         email: "",
         password: "",
-        country: "United States",
+        country: "Sri Lanka",
         employment_type: "Private Sector"
     })
     const [error, setError] = useState("")
@@ -117,31 +117,13 @@ export default function RegisterPage() {
                                     />
                                 </div>
                                 <div className="grid gap-2">
-                                    <Label htmlFor="country">Country</Label>
-                                    <select
-                                        id="country"
-                                        disabled={loading}
-                                        value={formData.country}
-                                        onChange={handleChange as any}
-                                        className="w-full h-10 rounded-xl bg-white/50 border border-white/30 px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium"
-                                        required
-                                    >
-                                        <option value="United States">United States</option>
-                                        <option value="Sri Lanka">Sri Lanka</option>
-                                        <option value="United Kingdom">United Kingdom</option>
-                                        <option value="Australia">Australia</option>
-                                        <option value="India">India</option>
-                                        <option value="Canada">Canada</option>
-                                    </select>
-                                </div>
-                                <div className="grid gap-2">
                                     <Label htmlFor="employment_type">Employment Type</Label>
                                     <select
                                         id="employment_type"
                                         disabled={loading}
                                         value={formData.employment_type}
                                         onChange={handleChange as any}
-                                        className="w-full h-10 rounded-xl bg-white/50 border border-white/30 px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium"
+                                        className="w-full h-11 rounded-xl bg-white/50 border border-white/30 px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium"
                                         required
                                     >
                                         <option value="Private Sector">Private Sector</option>
