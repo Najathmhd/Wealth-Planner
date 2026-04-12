@@ -11,7 +11,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> { }
 
-export function Sidebar({ className }: SidebarProps) {
+function Sidebar({ className }: SidebarProps) {
     const pathname = usePathname()
 
     const routes = [

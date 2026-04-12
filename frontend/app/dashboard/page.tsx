@@ -80,8 +80,8 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex items-center gap-3 bg-white/5 p-2 rounded-2xl border border-white/10 backdrop-blur-sm">
                     <div className="hidden lg:flex flex-col items-end px-3 border-r border-white/10">
-                        <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">System Status</span>
-                        <span className="text-xs text-emerald-400 font-medium">Synced {lastUpdated || "..."}</span>
+                        <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Update Status</span>
+                        <span className="text-xs text-emerald-400 font-medium">Last Updated {lastUpdated || "..."}</span>
                     </div>
                     <Button
                         variant="ghost"
@@ -104,7 +104,7 @@ export default function DashboardPage() {
                 <motion.div variants={item}>
                     <Card className="glass-card bg-gradient-to-br from-primary/20 via-primary/5 to-transparent h-full">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-white/90">Total Net Worth</CardTitle>
+                            <CardTitle className="text-sm font-medium text-white/90">Total Wealth</CardTitle>
                             <div className="p-2 bg-primary/20 rounded-lg">
                                 <DollarSign className="h-4 w-4 text-primary" />
                             </div>
@@ -113,7 +113,7 @@ export default function DashboardPage() {
                             <div className="text-2xl font-bold text-white">
                                 {currencySymbol}{summary?.total_savings?.toLocaleString() ?? "0.00"}
                             </div>
-                            <p className="text-xs text-primary/80 font-medium mt-1">Total combined balance</p>
+                            <p className="text-xs text-primary/80 font-medium mt-1">Your total combined money</p>
                         </CardContent>
                     </Card>
                 </motion.div>
@@ -121,7 +121,7 @@ export default function DashboardPage() {
                 <motion.div variants={item}>
                     <Card className="glass-card h-full">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-white/90">Monthly Income</CardTitle>
+                            <CardTitle className="text-sm font-medium text-white/90">Money In</CardTitle>
                             <div className="p-2 bg-blue-500/20 rounded-lg">
                                 <Wallet className="h-4 w-4 text-blue-400" />
                             </div>
@@ -130,7 +130,7 @@ export default function DashboardPage() {
                             <div className="text-2xl font-bold text-white">
                                 {currencySymbol}{summary?.monthly_income?.toLocaleString() ?? "0.00"}
                             </div>
-                            <p className="text-xs text-muted-foreground mt-1">Monthly inflow</p>
+                            <p className="text-xs text-muted-foreground mt-1">Monthly earnings</p>
                         </CardContent>
                     </Card>
                 </motion.div>
@@ -138,7 +138,7 @@ export default function DashboardPage() {
                 <motion.div variants={item}>
                     <Card className="glass-card h-full">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-white/90">Expenses</CardTitle>
+                            <CardTitle className="text-sm font-medium text-white/90">Money Out</CardTitle>
                             <div className="p-2 bg-orange-500/20 rounded-lg">
                                 <ArrowUpRight className="h-4 w-4 text-orange-400" />
                             </div>
@@ -147,7 +147,7 @@ export default function DashboardPage() {
                             <div className="text-2xl font-bold text-white">
                                 {currencySymbol}{summary?.monthly_expenses?.toLocaleString() ?? "0.00"}
                             </div>
-                            <p className="text-xs text-muted-foreground mt-1">Monthly outflow</p>
+                            <p className="text-xs text-muted-foreground mt-1">Monthly spending</p>
                         </CardContent>
                     </Card>
                 </motion.div>
@@ -160,7 +160,7 @@ export default function DashboardPage() {
                             </div>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium text-white/90">
-                                    {user?.employment_type === "Government Sector" ? "WNOP Pension" : "Social Security"}
+                                    {user?.employment_type?.includes("Government") ? "Government Pension" : "EPF/ETF Asset"}
                                 </CardTitle>
                                 <div className="p-2 bg-indigo-500/20 rounded-lg">
                                     <Shield className="h-4 w-4 text-indigo-400" />
@@ -170,8 +170,8 @@ export default function DashboardPage() {
                                 <div className="text-2xl font-bold text-white">
                                     {currencySymbol}{summary?.hidden_wealth?.toLocaleString()}
                                 </div>
-                                <p className="text-xs text-indigo-400/80 font-medium mt-1">
-                                    {user?.employment_type === "Government Sector" ? "Government Security Factor" : "EPF/ETF Hidden Growth"}
+                                 <p className="text-xs text-indigo-400/80 font-medium mt-1">
+                                    {user?.employment_type?.includes("Government") ? "Future Pension Savings" : "EPF/ETF Sector Savings"}
                                 </p>
                             </CardContent>
                         </Card>
@@ -184,7 +184,7 @@ export default function DashboardPage() {
                         (summary?.health_score || 0) > 40 ? 'border-t-amber-500' : 'border-t-orange-500'
                     }`}>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-white/90">Financial Health</CardTitle>
+                            <CardTitle className="text-sm font-medium text-white/90">Money Score</CardTitle>
                             <div className={`p-2 rounded-lg ${
                                 (summary?.health_score || 0) > 70 ? 'bg-emerald-500/20' : 'bg-amber-500/20'
                             }`}>
@@ -194,11 +194,11 @@ export default function DashboardPage() {
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="flex items-baseline gap-1">
+                             <div className="flex items-baseline gap-1">
                                 <div className="text-2xl font-bold text-white">
                                     {summary?.health_score ?? "0"}
                                 </div>
-                                <span className="text-xs text-muted-foreground">/100</span>
+                                <span className="text-xs text-white/40">/100</span>
                             </div>
                             <div className="mt-2 h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
                                 <motion.div 
@@ -211,8 +211,8 @@ export default function DashboardPage() {
                                 />
                             </div>
                             <p className="text-[10px] text-muted-foreground mt-2 font-medium uppercase tracking-tight">
-                                {(summary?.health_score || 0) > 70 ? 'Excellent Standing' : 
-                                 (summary?.health_score || 0) > 40 ? 'Stable / Needs Growth' : 'High Priority Action'}
+                                {(summary?.health_score || 0) > 70 ? 'Excellent Stability' : 
+                                 (summary?.health_score || 0) > 40 ? 'Moderate Growth' : 'Action Required'}
                             </p>
                         </CardContent>
                     </Card>
