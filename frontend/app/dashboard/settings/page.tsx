@@ -16,13 +16,11 @@ export default function SettingsPage() {
     const { user, loading, refreshData } = useFinance()
     const [isEditing, setIsEditing] = useState(false)
     const [editedName, setEditedName] = useState("")
-    const [editedCountry, setEditedCountry] = useState("United States")
     const [editedEmploymentType, setEditedEmploymentType] = useState("Private Sector")
 
     useEffect(() => {
         if (user) {
             setEditedName(user.full_name || "")
-            setEditedCountry(user.country || "United States")
             setEditedEmploymentType(user.employment_type || "Private Sector")
         }
     }, [user])
@@ -37,7 +35,6 @@ export default function SettingsPage() {
         try {
             await api.put("/auth/me", { 
                 full_name: editedName,
-                country: editedCountry,
                 employment_type: editedEmploymentType
             })
             await refreshData()
@@ -115,25 +112,11 @@ export default function SettingsPage() {
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-white/70">Country</label>
-                                {isEditing ? (
-                                    <select
-                                        className="w-full h-10 rounded-xl bg-black/40 border border-primary/30 px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                        value={editedCountry}
-                                        onChange={(e) => setEditedCountry(e.target.value)}
-                                    >
-                                        <option value="United States">United States</option>
-                                        <option value="Sri Lanka">Sri Lanka</option>
-                                        <option value="United Kingdom">United Kingdom</option>
-                                        <option value="Australia">Australia</option>
-                                        <option value="India">India</option>
-                                        <option value="Canada">Canada</option>
-                                    </select>
-                                ) : (
-                                    <div className="h-10 rounded-xl bg-black/20 border border-white/10 px-4 py-2 text-white font-medium">
-                                        {user?.country || "United States"}
-                                    </div>
-                                )}
+                                <label className="text-sm font-medium text-white/70">Region / Market</label>
+                                <div className="h-10 rounded-xl bg-black/20 border border-emerald-500/20 px-4 py-2 text-emerald-400 font-bold flex items-center gap-2">
+                                    <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                                    Sri Lanka (Localized)
+                                </div>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-white/70">Employment Type</label>
@@ -160,7 +143,7 @@ export default function SettingsPage() {
                                 <Button variant="ghost" className="text-white/60" onClick={() => {
                                     setIsEditing(false)
                                     setEditedName(user?.full_name || "")
-                                    setEditedCountry(user?.country || "United States")
+                                    setEditedName(user?.full_name || "")
                                     setEditedEmploymentType(user?.employment_type || "Private Sector")
                                 }}>
                                     Cancel
