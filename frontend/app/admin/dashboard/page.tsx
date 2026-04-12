@@ -82,6 +82,21 @@ export default function AdminDashboardPage() {
     const [empTypeFilter, setEmpTypeFilter] = useState("All")
     const [activityFilter, setActivityFilter] = useState("All") // New state
 
+    // Immediate Security Check (Run once on mount)
+    useEffect(() => {
+        const verifyAdmin = async () => {
+            try {
+                const meRes = await api.get("/auth/me")
+                if (meRes.data.role !== "admin") {
+                    router.push("/admin/login")
+                }
+            } catch (err) {
+                router.push("/admin/login")
+            }
+        }
+        verifyAdmin()
+    }, [])
+
     useEffect(() => {
         const debounceId = setTimeout(() => {
             fetchAdminData()
@@ -100,14 +115,9 @@ export default function AdminDashboardPage() {
     }, [selectedUser])
 
     const fetchAdminData = async () => {
+        // Data is always fetched, but security redirect is handled by immediate useEffect
         setLoading(true)
         try {
-            const meRes = await api.get("/auth/me")
-            if (meRes.data.role !== "admin") {
-                router.push("/admin/login")
-                return
-            }
-
             const params = new URLSearchParams()
             if (startDate) params.append("start_date", startDate)
             if (endDate) params.append("end_date", endDate)
@@ -252,8 +262,11 @@ export default function AdminDashboardPage() {
 
     if (loading && users.length === 0) {
         return (
-            <div className="flex h-[50vh] items-center justify-center">
+            <div className="flex h-[80vh] flex-col items-center justify-center gap-4">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                <p className="text-white/40 text-xs font-medium uppercase tracking-[0.2em] animate-pulse">
+                    Validating Administrative Credentials...
+                </p>
             </div>
         )
     }
