@@ -230,6 +230,17 @@ async def get_latest_profile(current_user: User = Depends(get_current_user)):
     # Convert ObjectId
     profile["id"] = str(profile["_id"])
     del profile["_id"]
+
+    # Add categorical label for visual synchronization
+    raw_score = profile.get("risk_appetite", 5)
+    horizon = profile.get("time_horizon", 5)
+    calc_score = raw_score
+    if horizon < 3: calc_score -= 2
+    
+    if calc_score > 7: profile["risk_category"] = "Aggressive"
+    elif calc_score >= 4: profile["risk_category"] = "Moderate"
+    else: profile["risk_category"] = "Conservative"
+
     return profile
 
 @router.get("/analyze")
