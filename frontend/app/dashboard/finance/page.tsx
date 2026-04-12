@@ -161,21 +161,21 @@ export default function FinancePage() {
                                         Add your regular streams of income here.
                                     </CardDescription>
                                 </div>
-                                {user?.country === "Sri Lanka" && (
+                                {user?.country === "Sri Lanka" && user?.employment_type === "Government" && (
                                     <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-full">
                                         <AlertCircle className="h-4 w-4 text-primary" />
-                                        <span className="text-[10px] font-bold text-primary uppercase tracking-wider">WNOP Active</span>
+                                        <span className="text-[10px] font-bold text-primary uppercase tracking-wider">W&OP Active</span>
                                     </div>
                                 )}
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            {user?.country === "Sri Lanka" && (
+                            {user?.country === "Sri Lanka" && user?.employment_type === "Government" && (
                                 <div className="mb-6 p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-xl space-y-3">
                                     <div className="flex items-start gap-3">
                                         <CheckCircle className="h-5 w-5 text-emerald-400 mt-0.5" />
                                         <div>
-                                            <p className="text-sm font-bold text-white">Wages Not Otherwise Paid (WNOP)</p>
+                                            <p className="text-sm font-bold text-white">Widows' & Orphans' Pension (W&OP)</p>
                                             <p className="text-xs text-white/50 leading-relaxed">
                                                 Include your bonuses, overtime, and allowances here. These are critical for accurate 
                                                 Wealth planning and EPF/ETF calculations in Sri Lanka.
