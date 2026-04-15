@@ -7,7 +7,7 @@ import { downloadCSV } from "@/lib/export"
 import { motion, AnimatePresence } from "framer-motion"
 import { 
     Users, DollarSign, Activity, Calendar, Shield,
-    Filter, LogOut, Briefcase, MapPin, Search, Download, Target, Brain, AlertTriangle, PlusCircle, Save, X, Edit3, Trash2
+    Filter, LogOut, Briefcase, MapPin, Search, Download, Target, Brain, AlertTriangle, PlusCircle, Save, X, Edit3, Trash2, Sparkles
 } from "lucide-react"
 import { 
     BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,

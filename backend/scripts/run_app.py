@@ -1,9 +1,16 @@
 import uvicorn
 import traceback
 import sys
+import os
+from pathlib import Path
+
+# Add parent directory to sys.path for importing app module
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 def log(msg):
-    with open("run_app.log", "a") as f:
+    # Log to the parent directory to keep backend/ root clean but accessible
+    log_path = Path(__file__).resolve().parent.parent / "run_app.log"
+    with open(log_path, "a") as f:
         f.write(str(msg) + "\n")
 
 log("--- SERVER START ATTEMPT ---")

@@ -12,6 +12,10 @@
 3. Run server: `uvicorn app.main:app --reload`
    - APIs available at `http://localhost:8000/docs`
 
+### Utility Scripts
+- **Seed Admin**: Run `python scripts/seed_admin.py` to create the initial admin user.
+- **Run App (Backup)**: Run `python scripts/run_app.py` for a wrapper with crash logging.
+
 ### Frontend
 1. Navigate to `/frontend`
 2. Install dependencies: `npm install`
