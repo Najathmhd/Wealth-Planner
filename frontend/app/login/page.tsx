@@ -51,7 +51,9 @@ export default function LoginPage() {
             
             // Check user role for admin routing
             const userRes = await api.get("/auth/me")
-            if (userRes.data?.role === "admin" || userRes.data?.email === "najamhd037@gmail.com") {
+            const userData = userRes.data
+            
+            if (userData?.role === "admin" || userData?.email === "najamhd037@gmail.com") {
                 router.push("/admin/dashboard")
             } else {
                 router.push("/dashboard")
