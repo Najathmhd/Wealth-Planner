@@ -15,7 +15,7 @@ class RiskAssessment(BaseModel):
 
 async def perform_analysis(assessment: RiskAssessment, current_user: User, db):
     # Ensure we have a valid user ID (Consistency with finance.py)
-    user_id_str = str(current_user.id) if current_user.id else current_user.email
+    user_id_str = current_user.email
     
     # 1. Determine local pension name first
     employment_type = getattr(current_user, "employment_type", "Private Sector")
@@ -198,7 +198,7 @@ async def perform_analysis(assessment: RiskAssessment, current_user: User, db):
 @router.post("/analyze")
 async def analyze_profile(assessment: RiskAssessment, current_user: User = Depends(get_current_user)):
     db = await get_database()
-    user_id_str = str(current_user.id) if current_user.id else current_user.email
+    user_id_str = current_user.email
 
     # 0. Save Profile Persistence
     risk_collection = db.get_collection("risk_profiles")
@@ -220,7 +220,7 @@ async def analyze_profile(assessment: RiskAssessment, current_user: User = Depen
 @router.get("/profile")
 async def get_latest_profile(current_user: User = Depends(get_current_user)):
     db = await get_database()
-    user_id_str = str(current_user.id) if current_user.id else current_user.email
+    user_id_str = current_user.email
     
     risk_collection = db.get_collection("risk_profiles")
     profile = await risk_collection.find_one({"user_id": user_id_str})
@@ -246,7 +246,7 @@ async def get_latest_profile(current_user: User = Depends(get_current_user)):
 @router.get("/analyze")
 async def get_analysis(current_user: User = Depends(get_current_user)):
     db = await get_database()
-    user_id_str = str(current_user.id) if current_user.id else current_user.email
+    user_id_str = current_user.email
     
     risk_collection = db.get_collection("risk_profiles")
     profile = await risk_collection.find_one({"user_id": user_id_str})
