@@ -4,6 +4,7 @@ from app.models.finance import UserFinance, IncomeSource, ExpenseItem, SavingsGo
 from app.api.auth import get_current_user
 from app.models.user import User
 from app.utils.config import COUNTRY_CONFIG
+from app.utils.finance_utils import calculate_money_metrics
 from datetime import datetime
 
 router = APIRouter()
@@ -14,7 +15,7 @@ async def save_finance_data(
     current_user: User = Depends(get_current_user)
 ):
     db = await get_database()
-    user_id = str(current_user.id) if current_user.id else current_user.email
+    user_id = current_user.email
     finance_collection = db.get_collection("finance")
     
     # Use provided date or fallback to current local date
@@ -57,7 +58,7 @@ async def save_finance_data(
 @router.get("/summary")
 async def get_finance_summary(currency: str = "USD", current_user: User = Depends(get_current_user)):
     db = await get_database()
-    user_id = str(current_user.id) if current_user.id else current_user.email
+    user_id = current_user.email
     finance_collection = db.get_collection("finance")
     
     finance_data = await finance_collection.find_one(
@@ -78,53 +79,16 @@ async def get_finance_summary(currency: str = "USD", current_user: User = Depend
             "currency": currency
         }
 
-    # Calculate Universal Localized Hidden Wealth
-    country = getattr(current_user, "country", "United States")
-    employment_type = getattr(current_user, "employment_type", "Private Sector")
-
-    # Safely get config with global fallback
-    country_cfg = COUNTRY_CONFIG.get(country, COUNTRY_CONFIG.get("United States", {}))
-    multiplier = country_cfg.get(employment_type, country_cfg.get("default", 0))
+    metrics = calculate_money_metrics(current_user.model_dump(), finance_data)
     
-    hidden_wealth = 0
-    incomes = finance_data.get("incomes", [])
-    primary_salary = sum(item.get("amount", 0) for item in incomes 
-                       if "salary" in item.get("name", "").lower() or "primary" in item.get("name", "").lower())
-    
-    if primary_salary > 0:
-        hidden_wealth = primary_salary * multiplier
-
-    # Monthly Totals (Fallback to calculation if fields missing from doc)
-    monthly_income = float(finance_data.get("monthly_income") or sum(item.get("amount", 0) for item in incomes))
-    monthly_expenses = float(finance_data.get("monthly_expenses") or sum(item.get("amount", 0) for item in finance_data.get("expenses", [])))
-    
-    monthly_savings = monthly_income - monthly_expenses + hidden_wealth
-    
-    # Health Score Calculation
-    savings_rate = (monthly_savings / monthly_income) if monthly_income > 0 else 0
-    health_score = min(100, max(10, int(savings_rate * 250)))
-    if monthly_expenses > (monthly_income * 0.7): health_score -= 15
-    health_score = min(100, max(0, health_score))
-
-    # Sector-Specific Terminology for Automated Savings
-    label = "Automated Savings"
-    if "government" in employment_type.lower():
-        label = "Pension Savings"
-    elif "private" in employment_type.lower():
-        label = "EPF/ETF Savings"
-    elif "business" in employment_type.lower() or "freelancer" in employment_type.lower():
-        label = "Self-Managed Savings"
-    elif multiplier == 0:
-        label = "No Automated Savings"
-
     return {
-        "total_savings": float(finance_data.get("total_savings", 0.0)) * rate,
-        "monthly_income": monthly_income * rate,
-        "monthly_expenses": monthly_expenses * rate,
+        "total_savings": metrics["total_savings"] * rate,
+        "monthly_income": metrics["monthly_income"] * rate,
+        "monthly_expenses": metrics["monthly_expenses"] * rate,
         "investment_roi": 12.5,
-        "hidden_wealth": round(hidden_wealth * rate, 2),
-        "hidden_wealth_label": label,
-        "health_score": health_score,
+        "hidden_wealth": round(metrics["hidden_wealth"] * rate, 2),
+        "hidden_wealth_label": metrics["hidden_wealth_label"],
+        "health_score": metrics["health_score"],
         "currency": currency
     }
 
@@ -142,7 +106,7 @@ async def convert_currency(amount: float, from_curr: str = "USD", to_curr: str =
 @router.get("/history")
 async def get_finance_history(currency: str = "USD", current_user: User = Depends(get_current_user)):
     db = await get_database()
-    user_id = str(current_user.id) if current_user.id else current_user.email
+    user_id = current_user.email
     finance_collection = db.get_collection("finance")
     
     rates = {"USD": 1.0, "LKR": 300.0, "EUR": 0.92}
@@ -172,7 +136,7 @@ async def get_finance_history(currency: str = "USD", current_user: User = Depend
 @router.get("/latest")
 async def get_latest_finance(current_user: User = Depends(get_current_user)):
     db = await get_database()
-    user_id = str(current_user.id) if current_user.id else current_user.email
+    user_id = current_user.email
     finance_collection = db.get_collection("finance")
     
     print(f"Fetching latest data for user: {user_id}")
