@@ -7,7 +7,7 @@ import { downloadCSV } from "@/lib/export"
 import { motion, AnimatePresence } from "framer-motion"
 import { 
     Users, DollarSign, Activity, Calendar, Shield,
-    Filter, LogOut, Briefcase, MapPin, Search, Download, Target, Brain, AlertTriangle, PlusCircle, Save, X, Edit3, Trash2, Sparkles
+    Filter, LogOut, Briefcase, MapPin, Search, Download, Target, Brain, AlertTriangle, PlusCircle, Save, X, Edit3, Trash2, Sparkles, RefreshCw
 } from "lucide-react"
 import { 
     BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -22,6 +22,7 @@ interface Financials {
     monthly_income: number;
     monthly_expenses: number;
     hidden_wealth: number;
+    health_score: number;
 }
 
 interface RiskProfile {
@@ -53,6 +54,7 @@ export default function AdminDashboardPage() {
     const [metrics, setMetrics] = useState({ total_portfolios: 0, total_savings_goals: 0 })
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState("")
+    const [lastUpdated, setLastUpdated] = useState<string>("")
 
     // Side Sheet Deep Dive
     const [selectedUser, setSelectedUser] = useState<UserData | null>(null)
@@ -103,6 +105,14 @@ export default function AdminDashboardPage() {
         }, 500)
         return () => clearTimeout(debounceId)
     }, [startDate, endDate, empTypeFilter])
+
+    // Auto-update interval (Refresh every 30 seconds)
+    useEffect(() => {
+        const interval = setInterval(() => {
+            fetchAdminData()
+        }, 30000)
+        return () => clearInterval(interval)
+    }, [])
     
     useEffect(() => {
         if(selectedUser) {
@@ -131,6 +141,7 @@ export default function AdminDashboardPage() {
                 const refreshed = res.data.users.find((u: UserData) => u.id === selectedUser.id)
                 setSelectedUser(refreshed || null)
             }
+            setLastUpdated(new Date().toLocaleTimeString())
         } catch (err: any) {
             console.error("Failed to load admin data:", err)
             if (err.response?.status === 401 || err.response?.status === 403) {
@@ -292,6 +303,22 @@ export default function AdminDashboardPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
+                    <div className="hidden md:flex flex-col items-end mr-2">
+                        <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Status</span>
+                        <div className="flex items-center gap-1.5">
+                            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <span className="text-[10px] text-emerald-500/80 font-medium">Live Monitoring</span>
+                        </div>
+                    </div>
+                    <Button 
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => fetchAdminData()}
+                        className="text-white/60 hover:text-white hover:bg-white/10"
+                        title={`Last updated: ${lastUpdated}`}
+                    >
+                        <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                    </Button>
                     <Button 
                         onClick={() => setIsCreateOpen(true)}
                         className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all font-medium rounded-xl"
@@ -443,7 +470,7 @@ export default function AdminDashboardPage() {
                                     <tr>
                                         <th className="px-6 py-4">User Details</th>
                                         <th className="px-6 py-4">Status</th>
-                                        <th className="px-6 py-4">Details</th>
+                                        <th className="px-6 py-4">Money Score</th>
                                         <th className="px-6 py-4 text-right">Income</th>
                                         <th className="px-6 py-4 text-right">Joined</th>
                                         <th className="px-6 py-4 text-right">Last Seen</th>
@@ -474,10 +501,23 @@ export default function AdminDashboardPage() {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 items-start">
-                                                <div className="text-sm text-slate-300 flex items-center mb-1">
-                                                    <Brain className="h-3 w-3 mr-1 text-primary" />
-                                                    {user.risk_profile?.risk_category || "N/A"}
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`text-sm font-bold ${
+                                                        (user.financials?.health_score || 0) > 70 ? 'text-emerald-400' : 
+                                                        (user.financials?.health_score || 0) > 40 ? 'text-amber-400' : 'text-orange-400'
+                                                    }`}>
+                                                        {user.financials?.health_score || 0}
+                                                    </div>
+                                                    <div className="flex-1 h-1.5 min-w-[60px] bg-white/10 rounded-full overflow-hidden">
+                                                        <div 
+                                                            className={`h-full ${
+                                                                (user.financials?.health_score || 0) > 70 ? 'bg-emerald-500' : 
+                                                                (user.financials?.health_score || 0) > 40 ? 'bg-amber-500' : 'bg-orange-500'
+                                                            }`}
+                                                            style={{ width: `${user.financials?.health_score || 0}%` }}
+                                                        />
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-right font-medium text-emerald-400">
@@ -737,6 +777,13 @@ export default function AdminDashboardPage() {
                                             Hidden Wealth <Sparkles className="h-3 w-3 ml-1 text-emerald-400" />
                                         </span>
                                         <span className="text-emerald-400 font-medium">LKR {selectedUser.financials?.hidden_wealth.toLocaleString()}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center py-2 border-b border-white/5 font-bold">
+                                        <span className="text-white text-sm">Money Score</span>
+                                        <span className={`${
+                                            (selectedUser.financials?.health_score || 0) > 70 ? 'text-emerald-400' : 
+                                            (selectedUser.financials?.health_score || 0) > 40 ? 'text-amber-400' : 'text-orange-400'
+                                        }`}>{selectedUser.financials?.health_score || 0}/100</span>
                                     </div>
                                     <div className="flex justify-between items-center pt-2">
                                         <span className="text-muted-foreground text-sm">Economic DNA Total</span>
