@@ -131,7 +131,7 @@ async def predict_stock_price(symbol: str, days: int = 30, current_user: User = 
 
         # 2. Fetch User Finance context
         db = await get_database()
-        user_id = str(current_user.id) if current_user.id else current_user.email
+        user_id = current_user.email
         finance_data = await db.finance.find_one({"user_id": user_id}, sort=[("date", -1)])
         surplus = 0
         if finance_data:
