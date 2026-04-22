@@ -26,7 +26,7 @@ async def ask_advisor(
 ):
     try:
         db = await get_database()
-        user_id = str(current_user.id) if current_user.id else current_user.email
+        user_id = current_user.email
         
         # 1. Fetch User Context
         finance_collection = db.get_collection("finance")
