@@ -6,6 +6,7 @@ from app.db.mongodb import get_database
 from app.api.auth import get_current_user
 from app.models.user import User
 from app.utils.config import COUNTRY_CONFIG
+from app.utils.finance_utils import calculate_money_metrics
 
 router = APIRouter()
 
@@ -66,54 +67,54 @@ async def get_admin_users(
                 pass
         
         user_id_str = str(u["_id"])
+        user_email = u.get("email")
         
-        # Fetch financial mapping
-        finance = await db.get_collection("finance").find_one({"user_id": user_id_str}, sort=[("date", -1)])
+        # Fetch financial mapping - Try email then fallback to ID
+        finance = await db.get_collection("finance").find_one({"user_id": user_email}, sort=[("date", -1)])
+        if not finance:
+            finance = await db.get_collection("finance").find_one({"user_id": user_id_str}, sort=[("date", -1)])
+            
         # Fetch risk profile if any
-        risk_profile = await db.risk_profiles.find_one({"user_id": user_id_str})
+        risk_profile = await db.risk_profiles.find_one({"user_id": user_email})
+        if not risk_profile:
+            risk_profile = await db.risk_profiles.find_one({"user_id": user_id_str})
 
-        # Calculate Hidden Wealth (Consistency with finance.py)
-        country = u.get("country", "Sri Lanka")
-        employment_type = u.get("employment_type", "Private Sector")
-        country_cfg = COUNTRY_CONFIG.get(country, COUNTRY_CONFIG.get("Sri Lanka", {}))
-        multiplier = country_cfg.get(employment_type, country_cfg.get("default", 0))
-
-        hidden_wealth = 0
-        if finance:
-            incomes = finance.get("incomes", [])
-            primary_salary = sum(item.get("amount", 0) for item in incomes 
-                               if "salary" in item.get("name", "").lower() or "primary" in item.get("name", "").lower())
-            hidden_wealth = primary_salary * multiplier
+        # Calculate Consistent Money Metrics
+        metrics = calculate_money_metrics(u, finance)
+        hidden_wealth = metrics["hidden_wealth"]
+        health_score = metrics["health_score"]
 
         # Map Risk Category for visual consistency
         risk_category = "N/A"
         if risk_profile:
             raw_score = risk_profile.get("risk_appetite", 5)
-            horizon = risk_profile.get("time_horizon", 5)
             # Duplicate logic from recommendations.py for consistency
             calc_score = raw_score
-            if horizon < 3: calc_score -= 2
             
             if calc_score > 7: risk_category = "Aggressive"
             elif calc_score >= 4: risk_category = "Moderate"
             else: risk_category = "Conservative"
         
+        user_country = u.get("country", "United States")
+        user_employment = u.get("employment_type", "Private Sector")
+
         results.append({
             "id": user_id_str,
             "email": u.get("email"),
             "full_name": u.get("full_name"),
             "role": u.get("role"),
             "last_login": u.get("last_login"),
-            "country": country,
-            "employment_type": employment_type,
+            "country": user_country,
+            "employment_type": user_employment,
             "created_at": created_at_dt.isoformat() if created_at_dt else None,
             "is_active": u.get("is_active", True),
             "savings_goals_count": len(finance.get("savings_goals", [])) if finance else 0,
             "financials": {
-                "total_savings": finance["total_savings"] if finance else 0.0,
-                "monthly_income": finance["monthly_income"] if finance else 0.0,
-                "monthly_expenses": finance["monthly_expenses"] if finance else 0.0,
-                "hidden_wealth": round(hidden_wealth, 2)
+                "total_savings": metrics["total_savings"],
+                "monthly_income": metrics["monthly_income"],
+                "monthly_expenses": metrics["monthly_expenses"],
+                "hidden_wealth": metrics["hidden_wealth"],
+                "health_score": metrics["health_score"]
             },
             "risk_profile": {
                 "age": risk_profile.get("age", "N/A"),
@@ -123,15 +124,8 @@ async def get_admin_users(
             } if risk_profile else None
         })
         
-    total_portfolios = await db.risk_profiles.count_documents({})
-    
-    pipeline = [
-        {"$project": {"amount": {"$size": {"$ifNull": ["$savings_goals", []]} } }},
-        {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
-    ]
-    cursor = db.get_collection("finance").aggregate(pipeline)
-    agg_res = await cursor.to_list(1)
-    total_savings_goals = agg_res[0]["total"] if agg_res else 0
+    total_portfolios = sum(1 for res in results if res["risk_profile"] is not None)
+    total_savings_goals = sum(res["savings_goals_count"] for res in results)
 
     return {
         "users": results, 
@@ -239,33 +233,34 @@ async def update_user_details_admin(user_id: str, payload: dict = Body(...), adm
 @router.delete("/users/{user_id}")
 async def delete_user_admin(user_id: str, admin_user: User = Depends(get_current_admin_user)):
     db = await get_database()
-    print(f"DEBUG: Attempting to delete user_id: {user_id}")
-    
+    # 1. Find user first to get email for cascade scrub
     query = {"_id": user_id}
     try:
         if len(user_id) == 24:
             query = {"_id": ObjectId(user_id)}
-            print(f"DEBUG: Parsed as ObjectId: {query}")
-    except Exception as e:
-        print(f"DEBUG: ObjectId parsing failed: {e}")
-        pass
-        
-    res = await db.users.delete_one(query)
-    print(f"DEBUG: First delete (query) result: deleted_count={res.deleted_count}")
+    except: pass
     
-    if res.deleted_count == 0:
-        print(f"DEBUG: Falling back to string match for: {user_id}")
-        res = await db.users.delete_one({"_id": user_id})
-        print(f"DEBUG: Fallback result: deleted_count={res.deleted_count}")
+    target_user = await db.users.find_one(query)
+    if not target_user:
+        target_user = await db.users.find_one({"_id": user_id})
         
-    if res.deleted_count == 0:
-        print(f"DEBUG: Delete FAILED (404)")
+    if not target_user:
         raise HTTPException(status_code=404, detail="User not found")
-            
-    # CRITICAL: Cascade Delete "Hard Scrub" Implementation
+
+    user_email = target_user.get("email")
     user_id_str = str(user_id)
+        
+    # 2. Delete the user document
+    res = await db.users.delete_one({"_id": target_user["_id"]})
+            
+    # 3. CRITICAL: Cascade Delete "Hard Scrub" Implementation
+    # Delete from finance and risk_profiles by BOTH ID and email
+    if user_email:
+        await db.get_collection("finance").delete_many({"user_id": user_email})
+        await db.risk_profiles.delete_many({"user_id": user_email})
+    
     await db.get_collection("finance").delete_many({"user_id": user_id_str})
     await db.risk_profiles.delete_many({"user_id": user_id_str})
     
-    print(f"DEBUG: Delete SUCCESS")
+    print(f"DEBUG: Delete SUCCESS for {user_email if user_email else user_id_str}")
     return {"message": "Execution successful. Data cascade initialized and scrubbed."}
